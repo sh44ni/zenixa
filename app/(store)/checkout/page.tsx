@@ -49,6 +49,11 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null)
 
+  // Coupon State
+  const [couponCode, setCouponCode] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; type: string; value: number } | null>(null)
+  const [validatingCoupon, setValidatingCoupon] = useState(false)
+
   const {
     register,
     handleSubmit,
@@ -94,8 +99,45 @@ export default function CheckoutPage() {
   }
 
   const subtotal = getTotal()
+
+  let discountAmount = 0
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENTAGE") {
+      discountAmount = (subtotal * appliedCoupon.value) / 100
+    } else {
+      discountAmount = appliedCoupon.value
+    }
+  }
+
   const shipping = subtotal >= 5000 ? 0 : 250
-  const total = subtotal + shipping
+  const total = Math.max(0, subtotal + shipping - discountAmount) // Ensure total doesn't go negative
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    setValidatingCoupon(true)
+    try {
+      const res = await fetch("/api/checkout/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Invalid coupon")
+
+      setAppliedCoupon(data.coupon)
+      toast({ title: "Coupon Applied", description: "Discount added successfully!" })
+    } catch (error: any) {
+      setAppliedCoupon(null)
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+    } finally {
+      setValidatingCoupon(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponCode("")
+  }
 
   const onSubmit = async (data: CheckoutFormData) => {
     setLoading(true)
@@ -113,8 +155,11 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           ...data,
           items: orderItems,
+
           subtotal,
           shipping,
+          discount: discountAmount,
+          couponCode: appliedCoupon?.code,
           total,
         }),
       })
@@ -352,6 +397,33 @@ export default function CheckoutPage() {
                   })}
                 </div>
 
+
+
+                <Separator />
+
+                {/* Coupon Input */}
+                <div className="space-y-2">
+                  <Label>Coupon Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      disabled={!!appliedCoupon}
+                      className="uppercase"
+                    />
+                    {appliedCoupon ? (
+                      <Button type="button" variant="outline" onClick={handleRemoveCoupon}>
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button type="button" onClick={handleApplyCoupon} disabled={validatingCoupon || !couponCode}>
+                        {validatingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 <Separator />
 
                 <div className="space-y-2">
@@ -369,6 +441,12 @@ export default function CheckoutPage() {
                       )}
                     </span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm text-green-600 font-medium">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
@@ -390,7 +468,7 @@ export default function CheckoutPage() {
             </Card>
           </div>
         </div>
-      </form>
-    </div>
+      </form >
+    </div >
   )
 }

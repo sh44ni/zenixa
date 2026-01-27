@@ -1,0 +1,30 @@
+{
+    "name": "Zenixa",
+    "short_name": "Zenixa",
+    "description": "Your trusted e-commerce destination for quality products",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/logo.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/logo.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "categories": [
+        "shopping",
+        "lifestyle"
+    ],
+    "lang": "en"
+}

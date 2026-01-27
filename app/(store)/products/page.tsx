@@ -1,22 +1,24 @@
 import { Suspense } from "react"
 import { prisma } from "@/lib/prisma"
-import { ProductCard } from "@/components/store/product-card"
+import { ModernProductCard } from "@/components/store/modern-product-card"
 import { ProductFilters } from "@/components/store/product-filters"
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface ProductsPageProps {
-  searchParams: {
-    category?: string
-    search?: string
-    minPrice?: string
-    maxPrice?: string
-    featured?: string
-    sort?: string
-    page?: string
-  }
+interface SearchParams {
+  category?: string
+  search?: string
+  minPrice?: string
+  maxPrice?: string
+  featured?: string
+  sort?: string
+  page?: string
 }
 
-async function getProducts(searchParams: ProductsPageProps["searchParams"]) {
+interface ProductsPageProps {
+  searchParams: Promise<SearchParams>
+}
+
+async function getProducts(searchParams: SearchParams) {
   const { category, search, minPrice, maxPrice, featured, sort, page } = searchParams
   const currentPage = parseInt(page || "1")
   const pageSize = 12
@@ -92,8 +94,9 @@ function ProductGridSkeleton() {
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const resolvedSearchParams = await searchParams
   const [{ products, total, totalPages, currentPage }, categories] = await Promise.all([
-    getProducts(searchParams),
+    getProducts(resolvedSearchParams),
     getCategories(),
   ])
 
@@ -102,7 +105,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Filters Sidebar */}
         <aside className="w-full md:w-64 shrink-0">
-          <ProductFilters categories={categories as any} searchParams={searchParams} />
+          <ProductFilters categories={categories as any} searchParams={resolvedSearchParams} />
         </aside>
 
         {/* Products Grid */}
@@ -110,13 +113,13 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold">
-                {searchParams.search
-                  ? `Search results for "${searchParams.search}"`
-                  : searchParams.category
-                  ? categories.find((c) => c.slug === searchParams.category)?.name || "Products"
-                  : searchParams.featured === "true"
-                  ? "Featured Products"
-                  : "All Products"}
+                {resolvedSearchParams.search
+                  ? `Search results for "${resolvedSearchParams.search}"`
+                  : resolvedSearchParams.category
+                    ? categories.find((c) => c.slug === resolvedSearchParams.category)?.name || "Products"
+                    : resolvedSearchParams.featured === "true"
+                      ? "Featured Products"
+                      : "All Products"}
               </h1>
               <p className="text-muted-foreground">
                 Showing {products.length} of {total} products
@@ -126,9 +129,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
           <Suspense fallback={<ProductGridSkeleton />}>
             {products.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product as any} />
+                  <ModernProductCard key={product.id} product={product as any} />
                 ))}
               </div>
             ) : (
@@ -149,14 +152,13 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   <a
                     key={i}
                     href={`/products?${new URLSearchParams({
-                      ...searchParams,
+                      ...resolvedSearchParams,
                       page: String(i + 1),
-                    })}`}
-                    className={`px-4 py-2 rounded-md ${
-                      currentPage === i + 1
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary hover:bg-secondary/80"
-                    }`}
+                    } as Record<string, string>)}`}
+                    className={`px-4 py-2 rounded-md ${currentPage === i + 1
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary hover:bg-secondary/80"
+                      }`}
                   >
                     {i + 1}
                   </a>

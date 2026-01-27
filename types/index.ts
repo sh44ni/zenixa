@@ -27,6 +27,7 @@ export interface Product {
   slug: string
   description: string | null
   price: number
+  comparePrice: number | null // Original price for sale display
   images: string[]
   featured: boolean
   category: Category
@@ -66,6 +67,10 @@ export interface Order {
   postalCode: string | null
   items: OrderItem[]
   subtotal: number
+  discount: number
+  couponCode: string | null
+  courier: string | null
+  trackingId: string | null
   shipping: number
   total: number
   paymentMethod: 'BANK_TRANSFER' | 'COD'
@@ -110,4 +115,18 @@ export interface CheckoutFormData {
   postalCode: string
   paymentMethod: 'BANK_TRANSFER' | 'COD'
   notes?: string
+}
+
+export interface Coupon {
+  id: string
+  code: string
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
+  value: number
+  startDate: string | Date | null
+  endDate: string | Date | null
+  usageLimit: number | null
+  usedCount: number
+  isActive: boolean
+  createdAt: string | Date
+  updatedAt: string | Date
 }

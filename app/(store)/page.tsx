@@ -1,12 +1,10 @@
 import Link from "next/link"
-import Image from "next/image"
 import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ProductCard } from "@/components/store/product-card"
-import { CategoryCard } from "@/components/store/category-card"
-import { Card, CardContent } from "@/components/ui/card"
-import { ArrowRight, Truck, Shield, Clock, Star } from "lucide-react"
+import { ModernProductCard } from "@/components/store/modern-product-card"
+import { BentoGrid } from "@/components/store/bento-grid"
+import { DynamicHero } from "@/components/store/dynamic-hero"
+import { ArrowRight, Truck, Shield, Clock, Star, Zap, Wifi } from "lucide-react"
 
 async function getFeaturedProducts() {
   return prisma.product.findMany({
@@ -22,7 +20,7 @@ async function getFeaturedProducts() {
 
 async function getCategories() {
   return prisma.category.findMany({
-    take: 6,
+    take: 5, // Optimized for Bento (5 items)
     orderBy: { name: "asc" },
   })
 }
@@ -46,232 +44,164 @@ export default async function HomePage() {
   ])
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Discover Quality Products at Amazing Prices
-              </h1>
-              <p className="text-lg text-blue-100">
-                Shop the latest trends in electronics, fashion, home essentials, and more.
-                Enjoy secure payments and fast delivery across Pakistan.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/products">
-                  <Button size="lg" variant="secondary">
-                    Shop Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/categories">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                    Browse Categories
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block relative">
-              <div className="aspect-square relative">
-                <Image
-                  src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600"
-                  alt="Shopping"
-                  fill
-                  className="object-cover rounded-lg shadow-2xl"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className="min-h-screen pb-20">
+      {/* 1. Immersive Hero */}
+      <DynamicHero />
 
-      {/* Features Section */}
-      <section className="py-12 bg-gray-50">
+      {/* 2. Marquee / Features - Minimal Scrolling Bar */}
+      <section className="py-6 border-y border-border/50 bg-secondary/20 overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Truck className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Free Delivery</h3>
-                <p className="text-sm text-muted-foreground">Orders over PKR 5,000</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Secure Payment</h3>
-                <p className="text-sm text-muted-foreground">100% protected</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Clock className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Fast Delivery</h3>
-                <p className="text-sm text-muted-foreground">2-5 business days</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Star className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Quality Products</h3>
-                <p className="text-sm text-muted-foreground">Premium selection</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold">Shop by Category</h2>
-                <p className="text-muted-foreground mt-1">Find what you&apos;re looking for</p>
-              </div>
-              <Link href="/categories">
-                <Button variant="outline">
-                  View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {categories.map((category) => (
-                <CategoryCard key={category.id} category={category as any} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Featured Products Section */}
-      {featuredProducts.length > 0 && (
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold">Featured Products</h2>
-                <p className="text-muted-foreground mt-1">Handpicked just for you</p>
-              </div>
-              <Link href="/products?featured=true">
-                <Button variant="outline">
-                  View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product as any} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Latest Products Section */}
-      {latestProducts.length > 0 && (
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold">New Arrivals</h2>
-                <p className="text-muted-foreground mt-1">Check out our latest products</p>
-              </div>
-              <Link href="/products">
-                <Button variant="outline">
-                  View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {latestProducts.map((product) => (
-                <ProductCard key={product.id} product={product as any} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Testimonials Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold">What Our Customers Say</h2>
-            <p className="text-muted-foreground mt-2">Trusted by thousands of happy customers</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex items-center justify-between md:justify-center md:gap-12 overflow-x-auto scrollbar-hide gap-8">
             {[
-              {
-                name: "Ahmed Khan",
-                location: "Lahore",
-                review: "Excellent quality products and super fast delivery. Zenixa has become my go-to online store!",
-              },
-              {
-                name: "Fatima Ali",
-                location: "Karachi",
-                review: "Great customer service and genuine products. The COD option makes shopping so convenient.",
-              },
-              {
-                name: "Hassan Raza",
-                location: "Islamabad",
-                review: "Best prices I've found anywhere. The product quality exceeded my expectations.",
-              },
-            ].map((testimonial, index) => (
-              <Card key={index}>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4">&quot;{testimonial.review}&quot;</p>
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.location}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              { icon: Truck, text: "Free Delivery over PKR 5,000" },
+              { icon: Shield, text: "Secure Payment" },
+              { icon: Clock, text: "Fast Delivery" },
+              { icon: Star, text: "Premium Quality" },
+            ].map((feature, i) => (
+              <div key={i} className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-muted-foreground">
+                <feature.icon className="h-4 w-4 text-primary" />
+                <span>{feature.text}</span>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16 bg-blue-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
-            <p className="mb-6">
-              Subscribe to our newsletter for exclusive deals, new arrivals, and special offers.
+      {/* 3. Bento Grid Categories */}
+      {categories.length > 0 && (
+        <section className="py-12 md:py-20">
+          <div className="container mx-auto px-4">
+            <div className="flex items-end justify-between mb-8 md:mb-12">
+              <div>
+                <h2 className="text-3xl md:text-5xl font-bold font-display tracking-tight mb-2">
+                  Collections
+                </h2>
+                <p className="text-muted-foreground">
+                  Curated for your lifestyle
+                </p>
+              </div>
+              <Link href="/categories" className="hidden md:block">
+                <Button variant="ghost" className="rounded-full hover:bg-secondary">
+                  View All <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <BentoGrid categories={categories as any[]} />
+
+            <div className="mt-8 md:hidden text-center">
+              <Link href="/categories">
+                <Button variant="outline" className="rounded-full w-full">View All Collections</Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 4. Featured Products - Horizontal Scroll Mobile, Grid Desktop */}
+      {featuredProducts.length > 0 && (
+        <section className="py-12 md:py-20 bg-secondary/30 relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
+
+          <div className="container mx-auto px-4 relative">
+            <div className="flex items-center justify-between mb-8 md:mb-12">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3">
+                  <SparklesIcon className="h-3 w-3" /> Trending
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold font-display tracking-tight">
+                  Featured Drops
+                </h2>
+              </div>
+              <Link href="/products?featured=true">
+                <Button variant="link" className="text-primary hover:text-primary/80">
+                  See All <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+              {featuredProducts.map((product) => (
+                <div key={product.id} className="h-full">
+                  <ModernProductCard product={product as any} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 5. Latest Arrivals */}
+      {latestProducts.length > 0 && (
+        <section className="py-12 md:py-20">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold font-display tracking-tight mb-2">New Arrivals</h2>
+                <p className="text-muted-foreground">Fresh from the factory to your doorstep</p>
+              </div>
+              <Link href="/products">
+                <Button className="rounded-full px-8 bg-foreground text-background hover:bg-primary hover:text-white transition-colors">
+                  Shop All New
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+              {latestProducts.map((product) => (
+                <div key={product.id} className="h-full">
+                  <ModernProductCard product={product as any} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 6. Newsletter */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-foreground/5" />
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-4xl mx-auto bg-foreground text-background rounded-[2.5rem] p-8 md:p-16 text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 -m-8 w-64 h-64 bg-primary/30 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 -m-8 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl" />
+
+            <h2 className="text-3xl md:text-5xl font-bold font-display mb-4 relative z-10">Don't Miss the Drop</h2>
+            <p className="text-background/70 mb-8 max-w-lg mx-auto relative z-10 text-lg">
+              Join zenixa.club for exclusive early access to new collections and special offers.
             </p>
-            <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input
+
+            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto relative z-10">
+              <input
                 type="email"
                 placeholder="Enter your email"
-                className="bg-white text-gray-900"
+                className="h-14 px-6 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 flex-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
-              <Button variant="secondary" type="submit">
+              <Button size="lg" className="h-14 px-8 rounded-full bg-white text-black hover:bg-primary hover:text-white transition-colors font-bold">
                 Subscribe
               </Button>
-            </form>
+            </div>
           </div>
         </div>
       </section>
     </div>
+  )
+}
+
+function SparklesIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    </svg>
   )
 }

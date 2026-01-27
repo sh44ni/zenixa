@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -17,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -29,18 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "@/hooks/use-toast"
 import { generateSlug } from "@/lib/utils"
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Loader2, FolderTree, Search } from "lucide-react"
 import { Category } from "@/types"
 
 const categorySchema = z.object({
@@ -53,7 +42,6 @@ const categorySchema = z.object({
 type CategoryFormData = z.infer<typeof categorySchema>
 
 export default function CategoriesPage() {
-  const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -61,13 +49,13 @@ export default function CategoriesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -92,6 +80,14 @@ export default function CategoriesPage() {
   useEffect(() => {
     fetchCategories()
   }, [])
+
+  // Filter categories
+  const filteredCategories = searchQuery.trim()
+    ? categories.filter(cat =>
+      cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cat.slug.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : categories
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value
@@ -188,94 +184,113 @@ export default function CategoriesPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-[hsl(221,83%,53%)]" />
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Categories</h1>
-          <p className="text-muted-foreground">Manage product categories</p>
+          <h1 className="admin-page-title">Categories</h1>
+          <p className="admin-page-subtitle hidden md:block">
+            Manage product categories
+          </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Category
-        </Button>
+        <button onClick={openCreateDialog} className="admin-action-btn primary">
+          <Plus className="h-4 w-4" />
+          <span className="hidden md:inline">Add Category</span>
+        </button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin" />
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(220,9%,46%)]" />
+        <Input
+          placeholder="Search categories..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 h-12 rounded-xl border-[hsl(220,13%,91%)] bg-white"
+        />
+      </div>
+
+      {/* Categories */}
+      {filteredCategories.length === 0 ? (
+        <div className="admin-list-card">
+          <div className="admin-empty-state">
+            <FolderTree className="icon" />
+            <p className="title">{searchQuery ? "No matching categories" : "No categories"}</p>
+            <p className="description">
+              {searchQuery ? "Try a different search" : "Add your first category"}
+            </p>
+            {!searchQuery && (
+              <button onClick={openCreateDialog} className="admin-action-btn primary mt-4">
+                <Plus className="h-4 w-4" />
+                Add Category
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="admin-list-card divide-y divide-[hsl(220,13%,91%)]">
+          {filteredCategories.map((category) => (
+            <div key={category.id} className="flex items-center gap-3 p-3">
+              {/* Image */}
+              <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-[hsl(220,14%,96%)] flex-shrink-0">
+                <Image
+                  src={category.image || "/placeholder.jpg"}
+                  alt={category.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-[hsl(222,47%,11%)] truncate">{category.name}</p>
+                <p className="text-xs text-[hsl(220,9%,46%)] truncate">{category.slug}</p>
+                {category.description && (
+                  <p className="text-xs text-[hsl(220,9%,46%)] line-clamp-1 mt-0.5 hidden md:block">
+                    {category.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl"
+                  onClick={() => openEditDialog(category)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl text-[hsl(0,84%,60%)]"
+                  onClick={() => {
+                    setDeletingCategory(category)
+                    setDeleteDialogOpen(true)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          ) : categories.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">No categories found</p>
-              <Button onClick={openCreateDialog} className="mt-4">
-                Add Your First Category
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Image</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>
-                      <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-gray-100">
-                        <Image
-                          src={category.image || "/placeholder.jpg"}
-                          alt={category.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{category.slug}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {category.description || "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openEditDialog(category)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setDeletingCategory(category)
-                            setDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl mx-4 max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? "Edit Category" : "Add New Category"}
@@ -295,9 +310,10 @@ export default function CategoriesPage() {
                   {...register("name")}
                   onChange={handleNameChange}
                   placeholder="Category name"
+                  className="h-12 rounded-xl"
                 />
                 {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                  <p className="text-sm text-[hsl(0,84%,60%)]">{errors.name.message}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -306,9 +322,10 @@ export default function CategoriesPage() {
                   id="slug"
                   {...register("slug")}
                   placeholder="category-slug"
+                  className="h-12 rounded-xl"
                 />
                 {errors.slug && (
-                  <p className="text-sm text-destructive">{errors.slug.message}</p>
+                  <p className="text-sm text-[hsl(0,84%,60%)]">{errors.slug.message}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -318,6 +335,7 @@ export default function CategoriesPage() {
                   {...register("description")}
                   placeholder="Category description"
                   rows={3}
+                  className="rounded-xl"
                 />
               </div>
               <div className="space-y-2">
@@ -326,14 +344,20 @@ export default function CategoriesPage() {
                   id="image"
                   {...register("image")}
                   placeholder="https://example.com/image.jpg"
+                  className="h-12 rounded-xl"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                className="rounded-xl h-11"
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving}>
+              <Button type="submit" disabled={saving} className="rounded-xl h-11">
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -350,7 +374,7 @@ export default function CategoriesPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Category</AlertDialogTitle>
             <AlertDialogDescription>
@@ -359,11 +383,11 @@ export default function CategoriesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving} className="rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={saving}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-[hsl(0,84%,60%)] hover:bg-[hsl(0,84%,55%)] rounded-xl"
             >
               {saving ? (
                 <>

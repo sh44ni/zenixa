@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json()
-    const { name, slug, description, price, images, categoryId, featured, variants } = data
+    const { name, slug, description, price, comparePrice, images, categoryId, featured, variants } = data
 
     // Check if slug already exists
     const existingProduct = await prisma.product.findUnique({
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         slug,
         description,
         price,
+        comparePrice: comparePrice || null,
         images,
         categoryId,
         featured,

@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Package, ArrowRight } from "lucide-react"
 
 interface OrderConfirmationPageProps {
-  params: {
+  params: Promise<{
     orderNumber: string
-  }
+  }>
 }
 
 async function getOrder(orderNumber: string) {
@@ -29,7 +29,8 @@ async function getOrder(orderNumber: string) {
 }
 
 export default async function OrderConfirmationPage({ params }: OrderConfirmationPageProps) {
-  const order = await getOrder(params.orderNumber)
+  const { orderNumber } = await params
+  const order = await getOrder(orderNumber)
 
   if (!order) {
     notFound()

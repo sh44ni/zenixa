@@ -9,14 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, CreditCard, Banknote } from "lucide-react"
+import { Loader2, CreditCard, Banknote, Smartphone, Wallet } from "lucide-react"
 
 const paymentSchema = z.object({
   bankTransferEnabled: z.boolean(),
   codEnabled: z.boolean(),
+  requireScreenshot: z.boolean(),
   bankName: z.string().optional(),
   accountTitle: z.string().optional(),
   accountNumber: z.string().optional(),
@@ -42,11 +43,13 @@ export default function PaymentSettingsPage() {
     defaultValues: {
       bankTransferEnabled: true,
       codEnabled: true,
+      requireScreenshot: false,
     },
   })
 
   const bankTransferEnabled = watch("bankTransferEnabled")
   const codEnabled = watch("codEnabled")
+  const requireScreenshot = watch("requireScreenshot")
 
   useEffect(() => {
     fetchSettings()
@@ -103,25 +106,26 @@ export default function PaymentSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Payment Settings</h1>
-        <p className="text-muted-foreground">Configure payment methods for your store</p>
+        <h1 className="text-2xl md:text-3xl font-bold">Payments</h1>
+        <p className="text-sm text-muted-foreground">Configure payment methods</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Active Payment Methods */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cash on Delivery */}
           <Card>
-            <CardHeader>
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Banknote className="h-6 w-6 text-green-600" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <Banknote className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Cash on Delivery</CardTitle>
-                    <CardDescription>Accept payment upon delivery</CardDescription>
+                    <p className="font-medium">Cash on Delivery</p>
+                    <p className="text-xs text-muted-foreground">Pay when delivered</p>
                   </div>
                 </div>
                 <Switch
@@ -129,26 +133,20 @@ export default function PaymentSettingsPage() {
                   onCheckedChange={(checked) => setValue("codEnabled", checked)}
                 />
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                When enabled, customers can pay cash when they receive their order.
-                This is a popular payment method in Pakistan.
-              </p>
             </CardContent>
           </Card>
 
           {/* Bank Transfer */}
           <Card>
-            <CardHeader>
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <CreditCard className="h-6 w-6 text-blue-600" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Bank Transfer</CardTitle>
-                    <CardDescription>Accept direct bank transfers</CardDescription>
+                    <p className="font-medium">Bank Transfer</p>
+                    <p className="text-xs text-muted-foreground">Direct bank transfer</p>
                   </div>
                 </div>
                 <Switch
@@ -156,29 +154,106 @@ export default function PaymentSettingsPage() {
                   onCheckedChange={(checked) => setValue("bankTransferEnabled", checked)}
                 />
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                When enabled, customers can pay via direct bank transfer.
-                You&apos;ll need to provide your bank account details below.
-              </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Coming Soon - Mocked Payment Methods */}
+        <div>
+          <h2 className="text-lg font-semibold mb-3 text-muted-foreground">Coming Soon</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* JazzCash */}
+            <Card className="opacity-60 pointer-events-none">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                      <Smartphone className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">JazzCash</p>
+                        <Badge variant="secondary" className="text-[10px]">Soon</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Mobile wallet</p>
+                    </div>
+                  </div>
+                  <Switch disabled checked={false} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* EasyPaisa */}
+            <Card className="opacity-60 pointer-events-none">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                      <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">EasyPaisa</p>
+                        <Badge variant="secondary" className="text-[10px]">Soon</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Mobile wallet</p>
+                    </div>
+                  </div>
+                  <Switch disabled checked={false} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Debit Card */}
+            <Card className="opacity-60 pointer-events-none">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                      <CreditCard className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">Debit Card</p>
+                        <Badge variant="secondary" className="text-[10px]">Soon</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">VISA / Mastercard</p>
+                    </div>
+                  </div>
+                  <Switch disabled checked={false} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Bank Account Details */}
         {bankTransferEnabled && (
           <Card>
-            <CardHeader>
-              <CardTitle>Bank Account Details</CardTitle>
-              <CardDescription>
-                These details will be shown to customers who choose bank transfer
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-base">Bank Account Details</CardTitle>
+              <CardDescription className="text-xs">
+                Shown to customers choosing bank transfer
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 pt-2 space-y-4">
+              {/* Require Screenshot Toggle */}
+              <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div>
+                  <p className="font-medium text-sm">Require Payment Proof</p>
+                  <p className="text-xs text-muted-foreground">
+                    Customers must upload screenshot
+                  </p>
+                </div>
+                <Switch
+                  checked={requireScreenshot}
+                  onCheckedChange={(checked) => setValue("requireScreenshot", checked)}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Label htmlFor="bankName" className="text-sm">Bank Name</Label>
                   <Input
                     id="bankName"
                     {...register("bankName")}
@@ -186,7 +261,7 @@ export default function PaymentSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="accountTitle">Account Title</Label>
+                  <Label htmlFor="accountTitle" className="text-sm">Account Title</Label>
                   <Input
                     id="accountTitle"
                     {...register("accountTitle")}
@@ -196,7 +271,7 @@ export default function PaymentSettingsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Label htmlFor="accountNumber" className="text-sm">Account Number</Label>
                   <Input
                     id="accountNumber"
                     {...register("accountNumber")}
@@ -204,7 +279,7 @@ export default function PaymentSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="iban">IBAN (Optional)</Label>
+                  <Label htmlFor="iban" className="text-sm">IBAN (Optional)</Label>
                   <Input
                     id="iban"
                     {...register("iban")}
@@ -213,11 +288,11 @@ export default function PaymentSettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bankInstructions">Payment Instructions</Label>
+                <Label htmlFor="bankInstructions" className="text-sm">Payment Instructions</Label>
                 <Textarea
                   id="bankInstructions"
                   {...register("bankInstructions")}
-                  placeholder="Additional instructions for customers (e.g., add order number as reference)"
+                  placeholder="Additional instructions (e.g., add order number as reference)"
                   rows={3}
                 />
               </div>
@@ -225,7 +300,7 @@ export default function PaymentSettingsPage() {
           </Card>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <Button type="submit" disabled={saving}>
             {saving ? (
               <>

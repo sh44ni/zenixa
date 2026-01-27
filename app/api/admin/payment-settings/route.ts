@@ -18,6 +18,7 @@ export async function GET() {
         data: {
           bankTransferEnabled: true,
           codEnabled: true,
+          requireScreenshot: false,
         },
       })
     }
@@ -44,6 +45,7 @@ export async function PUT(request: Request) {
     const {
       bankTransferEnabled,
       codEnabled,
+      requireScreenshot,
       bankName,
       accountTitle,
       accountNumber,
@@ -59,6 +61,7 @@ export async function PUT(request: Request) {
         data: {
           bankTransferEnabled,
           codEnabled,
+          requireScreenshot,
           bankName,
           accountTitle,
           accountNumber,
@@ -71,6 +74,7 @@ export async function PUT(request: Request) {
         data: {
           bankTransferEnabled,
           codEnabled,
+          requireScreenshot,
           bankName,
           accountTitle,
           accountNumber,

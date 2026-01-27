@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* Storefront Theme (Scoped to avoid affecting Admin) */
+.store-theme {
+    /* 2026 Palette: Electric Blue + Deep Violet + Soft Surface */
+    --primary: 240 100% 63%;
+    /* Electric Violet-Blue */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 20% 96%;
+    --secondary-foreground: 240 40% 20%;
+
+    --muted: 240 20% 97%;
+    --muted-foreground: 240 10% 40%;
+
+    --accent: 280 80% 60%;
+    /* Vivid Purple Accent */
+    --accent-foreground: 0 0% 100%;
+
+    --background: 240 30% 99%;
+    /* Very cool white */
+    --foreground: 240 40% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 40% 10%;
+
+    --border: 240 20% 92%;
+    --input: 240 20% 92%;
+    --ring: 240 100% 63%;
+
+    --radius: 1.5rem;
+    /* Large pill radius */
+
+    /* Typography Overrides */
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Heading Font */
+.store-theme h1,
+.store-theme h2,
+.store-theme h3,
+.store-theme h4,
+.store-theme h5,
+.store-theme h6 {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+/* Glassmorphism Utilities */
+.store-theme .glass-island {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.02),
+        0 2px 4px -1px rgba(0, 0, 0, 0.02),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+.store-theme .glass-card-hover {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.store-theme .glass-card-hover:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-4px);
+    box-shadow:
+        0 20px 40px -8px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    border-color: rgba(var(--primary), 0.3);
+}
+
+/* Text Gradients */
+.text-gradient-primary {
+    background: linear-gradient(135deg, hsl(240 100% 63%), hsl(280 80% 60%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Button override */
+.store-theme .btn-primary-store {
+    background: linear-gradient(135deg, hsl(240 100% 63%), hsl(260 100% 60%));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 14px 0 rgba(100, 100, 255, 0.3);
+}
+
+.store-theme .btn-primary-store:hover {
+    box-shadow: 0 6px 20px 0 rgba(100, 100, 255, 0.5);
+    transform: translateY(-1px);
+}

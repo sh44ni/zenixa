@@ -5,28 +5,34 @@ import { prisma } from "@/lib/prisma"
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { status } = await request.json()
+    const { status, courier, trackingId } = await request.json()
 
     const validStatuses = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]
-    if (!validStatuses.includes(status)) {
+    if (status && !validStatuses.includes(status)) {
       return NextResponse.json(
         { error: "Invalid status" },
         { status: 400 }
       )
     }
 
+    const updateData: any = {}
+    if (status) updateData.status = status
+    if (courier !== undefined) updateData.courier = courier
+    if (trackingId !== undefined) updateData.trackingId = trackingId
+
     const order = await prisma.order.update({
-      where: { id: params.id },
-      data: { status },
+      where: { id },
+      data: updateData,
     })
 
     return NextResponse.json(order)

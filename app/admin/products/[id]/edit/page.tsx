@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { ProductForm } from "@/components/admin/product-form"
 
 interface EditProductPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 async function getProduct(id: string) {
@@ -24,8 +24,10 @@ async function getCategories() {
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
+  const { id } = await params
+
   const [product, categories] = await Promise.all([
-    getProduct(params.id),
+    getProduct(id),
     getCategories(),
   ])
 
@@ -35,11 +37,6 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Edit Product</h1>
-        <p className="text-muted-foreground">Update product details</p>
-      </div>
-
       <ProductForm product={product as any} categories={categories} />
     </div>
   )

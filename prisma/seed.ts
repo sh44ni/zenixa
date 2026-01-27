@@ -381,8 +381,8 @@ async function main() {
         categoryId: category.id,
         variants: {
           create: variants.map((v) => ({
-            size: v.size || null,
-            color: v.color || null,
+            size: (v as any).size || null,
+            color: (v as any).color || null,
             stock: v.stock,
             priceModifier: v.priceModifier,
           })),

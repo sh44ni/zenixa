@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma"
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user || session.user.role !== "ADMIN") {
@@ -21,7 +22,7 @@ export async function PUT(
     const existingCategory = await prisma.category.findFirst({
       where: {
         slug,
-        id: { not: params.id },
+        id: { not: id },
       },
     })
 
@@ -33,7 +34,7 @@ export async function PUT(
     }
 
     const category = await prisma.category.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         slug,
@@ -54,9 +55,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user || session.user.role !== "ADMIN") {
@@ -65,7 +67,7 @@ export async function DELETE(
 
     // Check if category has products
     const productsCount = await prisma.product.count({
-      where: { categoryId: params.id },
+      where: { categoryId: id },
     })
 
     if (productsCount > 0) {
@@ -76,7 +78,7 @@ export async function DELETE(
     }
 
     await prisma.category.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Category deleted successfully" })
@@ -88,3 +90,4 @@ export async function DELETE(
     )
   }
 }
+

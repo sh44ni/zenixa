@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user || session.user.role !== "ADMIN") {
@@ -15,7 +16,7 @@ export async function GET(
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         category: true,
         variants: true,
@@ -38,9 +39,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user || session.user.role !== "ADMIN") {
@@ -48,13 +50,13 @@ export async function PUT(
     }
 
     const data = await request.json()
-    const { name, slug, description, price, images, categoryId, featured, variants } = data
+    const { name, slug, description, price, comparePrice, images, categoryId, featured, variants } = data
 
     // Check if slug already exists (excluding current product)
     const existingProduct = await prisma.product.findFirst({
       where: {
         slug,
-        id: { not: params.id },
+        id: { not: id },
       },
     })
 
@@ -67,17 +69,18 @@ export async function PUT(
 
     // Delete existing variants
     await prisma.productVariant.deleteMany({
-      where: { productId: params.id },
+      where: { productId: id },
     })
 
     // Update product with new variants
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         slug,
         description,
         price,
+        comparePrice: comparePrice || null,
         images,
         categoryId,
         featured,
@@ -108,9 +111,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user || session.user.role !== "ADMIN") {
@@ -118,7 +122,7 @@ export async function DELETE(
     }
 
     await prisma.product.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Product deleted successfully" })

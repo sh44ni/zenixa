@@ -27,6 +27,8 @@ export async function POST(request: Request) {
       subtotal,
       shipping,
       total,
+      couponCode,
+      discount,
     } = data
 
     // Validate payment method
@@ -44,6 +46,17 @@ export async function POST(request: Request) {
       )
     }
 
+    // Verify Coupon if provided (Optional security check + Usage increment)
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } })
+      if (coupon) {
+        await prisma.coupon.update({
+          where: { id: coupon.id },
+          data: { usedCount: { increment: 1 } }
+        })
+      }
+    }
+
     // Create order
     const order = await prisma.order.create({
       data: {
@@ -57,6 +70,8 @@ export async function POST(request: Request) {
         postalCode: postalCode || null,
         subtotal,
         shipping,
+        discount: discount || 0,
+        couponCode: couponCode || null,
         total,
         paymentMethod,
         notes: notes || null,

@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { ProductDetail } from "@/components/store/product-detail"
-import { ProductCard } from "@/components/store/product-card"
+import { ModernProductCard } from "@/components/store/modern-product-card"
 import type { Metadata } from "next"
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 async function getProduct(slug: string) {
@@ -35,7 +35,8 @@ async function getRelatedProducts(categoryId: string, currentProductId: string) 
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const product = await getProduct(params.slug)
+  const { slug } = await params
+  const product = await getProduct(slug)
 
   if (!product) {
     return {
@@ -55,7 +56,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProduct(params.slug)
+  const { slug } = await params
+  const product = await getProduct(slug)
 
   if (!product) {
     notFound()
@@ -63,16 +65,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const relatedProducts = await getRelatedProducts(product.categoryId, product.id)
 
+  const siteSettings = await prisma.siteSettings.findFirst({ where: { id: "default" } })
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <ProductDetail product={product as any} />
+      <ProductDetail
+        product={product as any}
+        colorSelectionMode={siteSettings?.colorSelectionMode || "text"}
+      />
 
       {relatedProducts.length > 0 && (
         <section className="mt-16">
           <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {relatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
+              <ModernProductCard key={product.id} product={product as any} />
             ))}
           </div>
         </section>
