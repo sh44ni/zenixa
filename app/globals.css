@@ -124,6 +124,11 @@
   body.admin-layout {
     padding-bottom: 0;
   }
+
+  /* Landing page styles - override bottom padding */
+  body:has(.landing-page) {
+    padding-bottom: 0;
+  }
 }
 
 @layer components {
@@ -246,6 +251,20 @@
 
 .animation-delay-400 {
   animation-delay: 400ms;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
 /* Slider transitions */
