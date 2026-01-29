@@ -59,11 +59,11 @@ export function DemoPopup() {
                                     </div>
                                     <div className="flex gap-2">
                                         <span className="text-muted-foreground w-12">Email:</span>
-                                        <span className="font-mono font-medium text-foreground select-all">admin@zenixa.pk</span>
+                                        <span className="font-mono font-medium text-foreground select-all">admin@zenixa.com</span>
                                     </div>
                                     <div className="flex gap-2">
                                         <span className="text-muted-foreground w-12">Pass:</span>
-                                        <span className="font-mono font-medium text-foreground select-all">admin</span>
+                                        <span className="font-mono font-medium text-foreground select-all">admin123</span>
                                     </div>
                                 </div>
 
