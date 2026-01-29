@@ -3,6 +3,7 @@ import "@/app/store.css"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { BottomNavigation } from "@/components/layout/bottom-navigation"
+import { DemoPopup } from "@/components/store/demo-popup"
 import { prisma } from "@/lib/prisma"
 
 const outfit = Outfit({
@@ -62,6 +63,7 @@ export default async function StoreLayout({
         socialLinks={footerSettings?.footerSocialLinks as SocialLink[] | undefined}
       />
       <BottomNavigation />
+      <DemoPopup />
     </div>
   )
 }
