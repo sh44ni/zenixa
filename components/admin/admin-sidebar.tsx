@@ -23,6 +23,7 @@ import {
   Boxes,
   BarChart3,
   TicketPercent,
+  FileText,
 } from "lucide-react"
 
 const navItems = [
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/admin/inventory", label: "Inventory", icon: Boxes },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/media", label: "Media", icon: ImageIcon },
+  { href: "/admin/pages", label: "Pages", icon: FileText },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]

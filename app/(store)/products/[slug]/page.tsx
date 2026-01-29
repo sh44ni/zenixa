@@ -72,6 +72,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductDetail
         product={product as any}
         colorSelectionMode={siteSettings?.colorSelectionMode || "text"}
+        badge1={{
+          icon: siteSettings?.productBadge1Icon || "truck",
+          title: siteSettings?.productBadge1Title || "Free Delivery",
+          subtitle: siteSettings?.productBadge1Subtitle || "Orders over PKR 5,000",
+          enabled: siteSettings?.productBadge1Enabled ?? true,
+        }}
+        badge2={{
+          icon: siteSettings?.productBadge2Icon || "rotate-ccw",
+          title: siteSettings?.productBadge2Title || "Easy Returns",
+          subtitle: siteSettings?.productBadge2Subtitle || "30 Day Guarantee",
+          enabled: siteSettings?.productBadge2Enabled ?? true,
+        }}
       />
 
       {relatedProducts.length > 0 && (

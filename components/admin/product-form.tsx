@@ -34,10 +34,16 @@ import { ImageUploader } from "@/components/admin/image-uploader"
 
 const variantSchema = z.object({
   id: z.string().optional(),
+  name: z.string().optional(),
   size: z.string().optional(),
   color: z.string().optional(),
-  stock: z.coerce.number().min(0),
-  priceModifier: z.coerce.number(),
+  sku: z.string().optional(),
+  stock: z.coerce.number().min(0, "Stock must be 0 or more"),
+  minStock: z.coerce.number().min(0).optional(),
+  price: z.coerce.number().min(0).nullable().optional(),
+  comparePrice: z.coerce.number().min(0).nullable().optional(),
+  priceModifier: z.coerce.number().optional(),
+  images: z.array(z.string()).optional(),
 })
 
 const productSchema = z.object({
@@ -150,12 +156,18 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       variants: product?.variants?.length
         ? product.variants.map((v) => ({
           id: v.id,
+          name: v.name || "",
           size: v.size || "",
           color: v.color || "",
+          sku: v.sku || "",
           stock: v.stock,
-          priceModifier: v.priceModifier,
+          minStock: (v as any).minStock ?? 5,
+          price: v.price || null,
+          comparePrice: v.comparePrice || null,
+          priceModifier: v.priceModifier || 0,
+          images: v.images || [],
         }))
-        : [{ size: "", color: "", stock: 0, priceModifier: 0 }],
+        : [{ name: "", size: "", color: "", sku: "", stock: 0, minStock: 5, price: null, comparePrice: null, priceModifier: 0, images: [] }],
     },
   })
 
@@ -567,7 +579,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ size: "", color: "", stock: 0, priceModifier: 0 })}
+                    onClick={() => append({ name: "", size: "", color: "", sku: "", stock: 0, minStock: 5, price: null, comparePrice: null, priceModifier: 0, images: [] })}
                   >
                     <Plus className="mr-1 h-4 w-4" />
                     Add Variant
@@ -593,49 +605,56 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                           </Button>
                         )}
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Variant Name (Optional)</Label>
+                          <Input {...register(`variants.${index}.name`)} placeholder="e.g. Red Leather" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>SKU</Label>
+                          <Input {...register(`variants.${index}.sku`)} placeholder="PROD-RED-L" />
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
-                          <Label>
-                            Size
-                            <FormTooltip content="Leave empty if size doesn't apply" />
-                          </Label>
-                          <Input
-                            {...register(`variants.${index}.size`)}
-                            placeholder="e.g., M, L, XL"
-                          />
+                          <Label>Size</Label>
+                          <Input {...register(`variants.${index}.size`)} placeholder="Size" />
                         </div>
                         <div className="space-y-2">
-                          <Label>
-                            Color
-                            <FormTooltip content="Leave empty if color doesn't apply" />
-                          </Label>
-                          <Input
-                            {...register(`variants.${index}.color`)}
-                            placeholder="e.g., Red, Blue"
-                          />
+                          <Label>Color</Label>
+                          <Input {...register(`variants.${index}.color`)} placeholder="Color" />
                         </div>
                         <div className="space-y-2">
-                          <Label>
-                            Stock *
-                            <FormTooltip content="How many units do you have available?" />
-                          </Label>
-                          <Input
-                            type="number"
-                            {...register(`variants.${index}.stock`)}
-                            placeholder="0"
-                          />
+                          <Label>Stock *</Label>
+                          <Input type="number" {...register(`variants.${index}.stock`)} placeholder="0" />
                         </div>
                         <div className="space-y-2">
-                          <Label>
-                            Price Modifier
-                            <FormTooltip content="Add or subtract from base price (e.g., +500 for premium size)" />
-                          </Label>
-                          <Input
-                            type="number"
-                            {...register(`variants.${index}.priceModifier`)}
-                            placeholder="0"
-                          />
+                          <Label>Min Stock Alert</Label>
+                          <Input type="number" {...register(`variants.${index}.minStock`)} placeholder="5" />
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Variant Price (Override)</Label>
+                          <Input type="number" {...register(`variants.${index}.price`)} placeholder="Leave empty to use base price" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Variant Compare Price</Label>
+                          <Input type="number" {...register(`variants.${index}.comparePrice`)} placeholder="Original price" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Variant Images</Label>
+                        {/* We can re-use ImageUploader here by controlling it via rhf controller if needed, or simple implementation for now */}
+                        <Label>Variant Images</Label>
+                        <ImageUploader
+                          images={watch(`variants.${index}.images`) || []}
+                          onChange={(newImages) => setValue(`variants.${index}.images`, newImages)}
+                        />
                       </div>
                     </div>
                   ))}

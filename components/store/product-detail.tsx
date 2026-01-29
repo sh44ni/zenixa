@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { ProductReviews } from "@/components/store/product-reviews"
 import {
   ShoppingCart,
   Heart,
@@ -26,15 +27,49 @@ import {
   ChevronDown,
   Star,
   Check,
-  AlertCircle
+  AlertCircle,
+  Package,
+  Clock,
+  Headphones,
+  Zap,
+  Award,
+  LucideIcon
 } from "lucide-react"
+
+// Icon mapping for dynamic badges
+const BADGE_ICONS: Record<string, LucideIcon> = {
+  truck: Truck,
+  "rotate-ccw": RotateCcw,
+  shield: Shield,
+  package: Package,
+  clock: Clock,
+  headphones: Headphones,
+  heart: Heart,
+  star: Star,
+  zap: Zap,
+  award: Award,
+}
+
+interface BadgeConfig {
+  icon: string
+  title: string
+  subtitle: string
+  enabled: boolean
+}
 
 interface ProductDetailProps {
   product: Product
   colorSelectionMode?: string
+  badge1?: BadgeConfig
+  badge2?: BadgeConfig
 }
 
-export function ProductDetail({ product, colorSelectionMode = "text" }: ProductDetailProps) {
+export function ProductDetail({
+  product,
+  colorSelectionMode = "text",
+  badge1 = { icon: "truck", title: "Free Delivery", subtitle: "Orders over PKR 5,000", enabled: true },
+  badge2 = { icon: "rotate-ccw", title: "Easy Returns", subtitle: "30 Day Guarantee", enabled: true }
+}: ProductDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants[0]
@@ -60,9 +95,16 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
   }
 
   const handleColorSelect = (color: string) => {
-    const variant = product.variants.find(
+    // Try to find a variant with the same size and new color
+    let variant = product.variants.find(
       (v) => v.color === color && (selectedVariant?.size ? v.size === selectedVariant.size : true)
     )
+
+    // If not found (e.g. this color doesn't have the current size), just find first variant with this color
+    if (!variant) {
+      variant = product.variants.find((v) => v.color === color)
+    }
+
     if (variant) setSelectedVariant(variant)
   }
 
@@ -132,7 +174,26 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
     }
   }
 
-  const currentPrice = product.price + (selectedVariant?.priceModifier || 0)
+  // Determine Price to Show
+  const currentPrice = selectedVariant?.price
+    ? selectedVariant.price
+    : product.price + (selectedVariant?.priceModifier || 0)
+
+  const comparePrice = selectedVariant?.comparePrice
+    ? selectedVariant.comparePrice
+    : product.comparePrice
+
+  const displayImages = (selectedVariant?.images && selectedVariant.images.length > 0)
+    ? selectedVariant.images
+    : product.images
+
+  // Reset selected image index when variant changes if needed
+  useEffect(() => {
+    if (selectedVariant?.images && selectedVariant.images.length > 0) {
+      setSelectedImage(0)
+    }
+  }, [selectedVariant])
+
   const inStock = selectedVariant ? selectedVariant.stock > 0 : product.variants.some((v) => v.stock > 0)
 
   return (
@@ -161,8 +222,8 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
               className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide aspect-[4/5]"
               onScroll={handleScroll}
             >
-              {product.images.length > 0 ? (
-                product.images.map((image, index) => (
+              {displayImages.length > 0 ? (
+                displayImages.map((image, index) => (
                   <div key={index} className="flex-shrink-0 w-full h-full snap-center relative">
                     <Image
                       src={image}
@@ -182,7 +243,7 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
 
             {/* Mobile Indicators */}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-              {product.images.map((_, i) => (
+              {displayImages.map((_, i) => (
                 <div key={i} className={`h-1.5 rounded-full transition-all ${selectedImage === i ? "w-6 bg-white" : "w-1.5 bg-white/50"}`} />
               ))}
             </div>
@@ -190,9 +251,9 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
             {/* Status Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
               {!inStock && <Badge variant="destructive">Sold Out</Badge>}
-              {product.comparePrice && product.comparePrice > product.price && (
+              {comparePrice && comparePrice > currentPrice && (
                 <Badge className="bg-red-500 hover:bg-red-600 border-0">
-                  -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
+                  -{Math.round(((comparePrice - currentPrice) / comparePrice) * 100)}%
                 </Badge>
               )}
             </div>
@@ -202,7 +263,7 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
           <div className="hidden md:flex flex-col gap-4 sticky top-24">
             <div className="aspect-[4/3] relative rounded-[2rem] overflow-hidden bg-secondary/10 border border-black/5 shadow-sm group">
               <Image
-                src={product.images[selectedImage] || "/placeholder.jpg"}
+                src={displayImages[selectedImage] || "/placeholder.jpg"}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-110 cursor-zoom-in"
@@ -220,9 +281,9 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
               </div>
             </div>
 
-            {product.images.length > 1 && (
+            {displayImages.length > 1 && (
               <div className="grid grid-cols-5 gap-4">
-                {product.images.map((img, i) => (
+                {displayImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
@@ -248,23 +309,15 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
                 {product.name}
               </h1>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-4xl font-bold text-foreground">
-                    {formatPrice(currentPrice)}
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl md:text-4xl font-bold text-foreground">
+                  {formatPrice(currentPrice)}
+                </span>
+                {comparePrice && comparePrice > currentPrice && (
+                  <span className="text-lg text-muted-foreground line-through decoration-destructive/30">
+                    {formatPrice(comparePrice)}
                   </span>
-                  {product.comparePrice && product.comparePrice > currentPrice && (
-                    <span className="text-lg text-muted-foreground line-through decoration-destructive/30">
-                      {formatPrice(product.comparePrice)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 text-yellow-500">
-                  <Star className="h-4 w-4 fill-current" />
-                  <span className="font-bold text-foreground ml-1">4.8</span>
-                  <span className="text-muted-foreground text-sm">(24 reviews)</span>
-                </div>
+                )}
               </div>
             </div>
 
@@ -308,7 +361,9 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
                           if (map[n]) return map[n]
                           // Check for partial matches like "Beige Pattern" -> "Beige"
                           const partial = Object.keys(map).find(k => n.includes(k))
-                          return partial ? map[partial] : c
+                          if (partial) return map[partial]
+                          // If no match, return a neutral gray as fallback
+                          return "#9CA3AF"
                         }
 
                         // Handle dual colors like "Black/White" with a clean hard split
@@ -321,39 +376,47 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
                       })()
 
                       if (colorSelectionMode === "swatch") {
+                        // Determine if color is light for proper icon visibility
+                        const isLightColor = ["White", "white", "Cream", "cream", "Ivory", "ivory", "Beige", "beige", "Yellow", "yellow"].some(
+                          c => color?.toLowerCase().includes(c.toLowerCase())
+                        )
                         return (
                           <button
                             key={color}
                             onClick={() => handleColorSelect(color!)}
                             className={`
-                               w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center
-                               ${isSelected ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border hover:border-gray-400"}
+                               w-12 h-12 rounded-full border-2 transition-all flex items-center justify-center shadow-sm
+                               ${isSelected ? "border-primary ring-2 ring-primary ring-offset-2 scale-110" : "border-gray-200 hover:border-gray-400 hover:scale-105"}
+                               ${isLightColor ? "ring-1 ring-gray-200" : ""}
                              `}
                             style={{ background: colorValue || "#eee" }}
                             title={color!}
                           >
-                            {isSelected && color === "White" && <Check className="h-4 w-4 text-black" />}
-                            {isSelected && color !== "White" && <Check className="h-4 w-4 text-white" />}
+                            {isSelected && (
+                              <Check className={`h-5 w-5 drop-shadow-sm ${isLightColor ? "text-gray-800" : "text-white"}`} />
+                            )}
                           </button>
                         )
                       }
 
                       if (colorSelectionMode === "image") {
-                        const imageIndex = idx % Math.max(product.images.length, 1)
-                        const imageUrl = product.images[imageIndex] || "/placeholder.jpg"
+                        // Find a variant with this color and get its first image, or fallback to product image
+                        const variantWithColor = product.variants.find(v => v.color === color)
+                        const variantImage = variantWithColor?.images?.[0] || product.images[0] || "/placeholder.jpg"
+
                         return (
                           <button
                             key={color}
                             onClick={() => handleColorSelect(color!)}
                             className={`
-                               relative w-12 h-12 rounded-md overflow-hidden border-2 transition-all
-                               ${isSelected ? "border-primary ring-2 ring-primary ring-offset-2" : "border-transparent hover:border-gray-300"}
+                               relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shadow-sm
+                               ${isSelected ? "border-primary ring-2 ring-primary ring-offset-2 scale-105" : "border-gray-200 hover:border-gray-400 hover:scale-105"}
                              `}
                             title={color!}
                           >
-                            <Image src={imageUrl} alt={color!} fill className="object-cover" />
+                            <Image src={variantImage} alt={color!} fill className="object-cover" sizes="64px" />
                             {isSelected && (
-                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                                 <Check className="h-6 w-6 text-white drop-shadow-md" />
                               </div>
                             )}
@@ -461,22 +524,34 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
             </div>
 
             {/* Guarantees */}
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/20">
-                <div className="bg-white p-2 rounded-full shadow-sm"><Truck className="h-5 w-5 text-primary" /></div>
-                <div>
-                  <h4 className="font-bold text-sm">Free Delivery</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Orders over PKR 5,000</p>
-                </div>
+            {(badge1.enabled || badge2.enabled) && (
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                {badge1.enabled && (() => {
+                  const Badge1Icon = BADGE_ICONS[badge1.icon] || Truck
+                  return (
+                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/20">
+                      <div className="bg-white p-2 rounded-full shadow-sm"><Badge1Icon className="h-5 w-5 text-primary" /></div>
+                      <div>
+                        <h4 className="font-bold text-sm">{badge1.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">{badge1.subtitle}</p>
+                      </div>
+                    </div>
+                  )
+                })()}
+                {badge2.enabled && (() => {
+                  const Badge2Icon = BADGE_ICONS[badge2.icon] || RotateCcw
+                  return (
+                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/20">
+                      <div className="bg-white p-2 rounded-full shadow-sm"><Badge2Icon className="h-5 w-5 text-primary" /></div>
+                      <div>
+                        <h4 className="font-bold text-sm">{badge2.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">{badge2.subtitle}</p>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/20">
-                <div className="bg-white p-2 rounded-full shadow-sm"><RotateCcw className="h-5 w-5 text-primary" /></div>
-                <div>
-                  <h4 className="font-bold text-sm">Easy Returns</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">30 Day Guarantee</p>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Description Accordion */}
             <div className="pt-4">
@@ -485,6 +560,10 @@ export function ProductDetail({ product, colorSelectionMode = "text" }: ProductD
                 {product.description || "No specific description available."}
               </div>
             </div>
+
+            {/* Reviews Section */}
+            <Separator className="my-6" />
+            <ProductReviews productId={product.id} productName={product.name} />
 
           </div>
         </div>

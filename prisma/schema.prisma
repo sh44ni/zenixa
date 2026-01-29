@@ -38,6 +38,7 @@ model User {
   orders        Order[]
   addresses     Address[]
   wishlist      Wishlist[]
+  reviews       Review[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -90,6 +91,7 @@ model Product {
   variants     ProductVariant[]
   orderItems   OrderItem[]
   wishlistedBy Wishlist[]
+  reviews      Review[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 }
@@ -98,11 +100,16 @@ model ProductVariant {
   id            String      @id @default(cuid())
   product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId     String
+  name          String?     // e.g. "Red Leather" (Optional override)
   size          String?
   color         String?
+  sku           String?     // Stock Keeping Unit
   stock         Int         @default(0)
-  minStock      Int         @default(5)  // Low stock alert threshold
-  priceModifier Float       @default(0)
+  minStock      Int         @default(5)
+  price         Float?      // Absolute price override
+  comparePrice  Float?      // Original price override
+  priceModifier Float       @default(0) // Keep for backward compat, but prefer 'price'
+  images        String[]    // Variant-specific image gallery
   orderItems    OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -193,6 +200,27 @@ model SiteSettings {
   heroTitle        String   @default("Discover Quality Products at Amazing Prices")
   heroSubtitle     String   @default("Shop the latest trends in electronics, fashion, home essentials, and more.")
   
+  // Hero Text Visibility
+  heroShowText     Boolean  @default(true) // Toggle for text overlay with gradient
+  
+  // Hero Badge Settings
+  heroShowBadge    Boolean  @default(true)
+  heroBadgeText    String   @default("New Collection 2026")
+  
+  // Hero Primary Button Settings
+  heroShowButton1  Boolean  @default(true)
+  heroButton1Text  String   @default("Shop Now")
+  heroButton1Link  String   @default("/products")
+  
+  // Hero Secondary Button Settings
+  heroShowButton2  Boolean  @default(true)
+  heroButton2Text  String   @default("Explore Categories")
+  heroButton2Link  String   @default("/categories")
+  
+  // Hero Image Dimensions (for validation)
+  heroImageWidth   Int      @default(1920)
+  heroImageHeight  Int      @default(800)
+  
   // Theme Colors (HSL format)
   primaryColor     String   @default("221.2 83.2% 53.3%")
   secondaryColor   String   @default("210 40% 96.1%")
@@ -200,6 +228,48 @@ model SiteSettings {
   
   // Product Display Settings
   colorSelectionMode String @default("text") // "text" | "swatch" | "image"
+  
+  // Product Page Guarantee Badges
+  productBadge1Icon    String   @default("truck")
+  productBadge1Title   String   @default("Free Delivery")
+  productBadge1Subtitle String  @default("Orders over PKR 5,000")
+  productBadge1Enabled Boolean  @default(true)
+  
+  productBadge2Icon    String   @default("rotate-ccw")
+  productBadge2Title   String   @default("Easy Returns")
+  productBadge2Subtitle String  @default("30 Day Guarantee")
+  productBadge2Enabled Boolean  @default(true)
+  
+  // Delivery Settings
+  deliveryCharges       Float   @default(250)
+  freeDeliveryEnabled   Boolean @default(true)
+  freeDeliveryThreshold Float   @default(5000)
+  alwaysFreeDelivery    Boolean @default(false)
+  
+  
+  // Feature Badges (JSON array of {icon, text} objects)
+  featureBadges Json @default("[]")
+  
+  // CTA Banner Settings
+  ctaBannerImage    String?
+  ctaBannerTitle    String   @default("Don't Miss the Drop")
+  ctaBannerSubtitle String   @default("Join zenixa.club for exclusive early access to new collections and special offers.")
+  ctaBannerButtonText String @default("Subscribe")
+  ctaBannerLink     String?
+  
+  // Promotional Banner Settings (above newsletter)
+  promoBannerEnabled Boolean  @default(false)
+  promoBannerImage   String?
+  promoBannerLink    String?
+  promoBannerWidth   Int      @default(1200)  // Required width in pixels
+  promoBannerHeight  Int      @default(300)   // Required height in pixels
+  
+  // Footer Settings
+  footerBrandText    String   @default("Your one-stop shop for quality products at amazing prices. We deliver across Pakistan with care and speed.")
+  footerEmail        String   @default("support@zenixa.club")
+  footerPhone        String   @default("+92 300 1234567")
+  footerAddress      String   @default("Lahore, Pakistan")
+  footerSocialLinks  Json     @default("[]")  // Array of {platform, url, label}
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -216,4 +286,43 @@ model Media {
   width       Int?
   height      Int?
   createdAt   DateTime @default(now())
+}
+
+// Product reviews with purchase verification
+model Review {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  rating    Int      // 1-5 stars
+  title     String?
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) // One review per user per product
+}
+
+// Dynamic policy pages (Shipping, Return, etc.)
+model PolicyPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique  // "shipping-policy", "return-policy"
+  title     String
+  content   String   @db.Text  // Rich text/markdown content
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// FAQ items
+model FaqItem {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  order     Int      @default(0)
+  category  String?  // Optional: "Orders", "Shipping", "Returns"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

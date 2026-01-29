@@ -1,15 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { HeroSettingsForm } from "@/components/admin/hero-settings-form"
 import { ThemeSettingsForm } from "@/components/admin/theme-settings-form"
-import { ImageMigrationCard } from "@/components/admin/image-migration-card"
-import { Settings, Image as ImageIcon, Palette, AlertCircle, Wrench } from "lucide-react"
+import { FooterSettings } from "@/components/admin/footer-settings"
+import { Palette, Globe, Settings, AlertCircle } from "lucide-react"
 
 // Default settings
 const defaultSettings = {
     id: "default",
     heroMode: "image",
-    heroImage: null,
+    heroImage: null as string | null,
     heroSliderImages: [] as string[],
     heroTitle: "Discover Quality Products at Amazing Prices",
     heroSubtitle: "Shop the latest trends in electronics, fashion, home essentials, and more.",
@@ -17,6 +16,12 @@ const defaultSettings = {
     secondaryColor: "210 40% 96.1%",
     accentColor: "210 40% 96.1%",
     colorSelectionMode: "text",
+    featureBadges: [] as unknown[],
+    promoBannerEnabled: false,
+    promoBannerImage: null as string | null,
+    promoBannerLink: null as string | null,
+    promoBannerWidth: 1200,
+    promoBannerHeight: 300,
     createdAt: new Date(),
     updatedAt: new Date(),
 }
@@ -93,43 +98,33 @@ export default async function SettingsPage() {
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="hero" className="space-y-4">
-                <TabsList className="w-full grid grid-cols-3 h-12 rounded-xl bg-[hsl(220,14%,96%)] p-1">
-                    <TabsTrigger
-                        value="hero"
-                        className="rounded-lg h-10 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                    >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Hero</span>
-                    </TabsTrigger>
+            <Tabs defaultValue="theme" className="space-y-4">
+                <TabsList className="w-full grid grid-cols-2 h-12 rounded-xl bg-[hsl(220,14%,96%)] p-1">
                     <TabsTrigger
                         value="theme"
                         className="rounded-lg h-10 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
                     >
                         <Palette className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Theme</span>
+                        Theme Colors
                     </TabsTrigger>
                     <TabsTrigger
-                        value="tools"
+                        value="footer"
                         className="rounded-lg h-10 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
                     >
-                        <Wrench className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Tools</span>
+                        <Globe className="h-4 w-4 mr-2" />
+                        Footer
                     </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="hero" className="mt-4">
-                    <HeroSettingsForm settings={settings} />
-                </TabsContent>
 
                 <TabsContent value="theme" className="mt-4">
                     <ThemeSettingsForm settings={settings} />
                 </TabsContent>
 
-                <TabsContent value="tools" className="mt-4 space-y-4">
-                    <ImageMigrationCard />
+                <TabsContent value="footer" className="mt-4">
+                    <FooterSettings settings={settings} />
                 </TabsContent>
             </Tabs>
         </div>
     )
 }
+

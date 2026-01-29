@@ -42,12 +42,25 @@ interface PaymentSettings {
   bankInstructions: string | null
 }
 
+interface DeliverySettings {
+  deliveryCharges: number
+  freeDeliveryEnabled: boolean
+  freeDeliveryThreshold: number
+  alwaysFreeDelivery: boolean
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const { items, getTotal, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null)
+  const [deliverySettings, setDeliverySettings] = useState<DeliverySettings>({
+    deliveryCharges: 250,
+    freeDeliveryEnabled: true,
+    freeDeliveryThreshold: 5000,
+    alwaysFreeDelivery: false,
+  })
 
   // Coupon State
   const [couponCode, setCouponCode] = useState("")
@@ -74,6 +87,21 @@ export default function CheckoutPage() {
     fetch("/api/payment-settings")
       .then((res) => res.json())
       .then((data) => setPaymentSettings(data))
+      .catch(console.error)
+
+    // Fetch delivery settings
+    fetch("/api/admin/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setDeliverySettings({
+            deliveryCharges: data.deliveryCharges ?? 250,
+            freeDeliveryEnabled: data.freeDeliveryEnabled ?? true,
+            freeDeliveryThreshold: data.freeDeliveryThreshold ?? 5000,
+            alwaysFreeDelivery: data.alwaysFreeDelivery ?? false,
+          })
+        }
+      })
       .catch(console.error)
   }, [])
 
@@ -109,7 +137,14 @@ export default function CheckoutPage() {
     }
   }
 
-  const shipping = subtotal >= 5000 ? 0 : 250
+  // Calculate shipping based on delivery settings
+  const calculateShipping = () => {
+    if (deliverySettings.alwaysFreeDelivery) return 0
+    if (deliverySettings.freeDeliveryEnabled && subtotal >= deliverySettings.freeDeliveryThreshold) return 0
+    return deliverySettings.deliveryCharges
+  }
+
+  const shipping = calculateShipping()
   const total = Math.max(0, subtotal + shipping - discountAmount) // Ensure total doesn't go negative
 
   const handleApplyCoupon = async () => {

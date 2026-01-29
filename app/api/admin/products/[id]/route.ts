@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
+import { generateSlug } from "@/lib/utils"
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -50,7 +52,10 @@ export async function PUT(
     }
 
     const data = await request.json()
-    const { name, slug, description, price, comparePrice, images, categoryId, featured, variants } = data
+    const { name, description, price, comparePrice, images, categoryId, featured, variants } = data
+
+    // Ensure slug is URL safe
+    const slug = generateSlug(data.slug || name)
 
     // Check if slug already exists (excluding current product)
     const existingProduct = await prisma.product.findFirst({
@@ -86,10 +91,16 @@ export async function PUT(
         featured,
         variants: {
           create: variants.map((v: any) => ({
+            name: v.name || null,
             size: v.size || null,
             color: v.color || null,
+            sku: v.sku || null,
             stock: v.stock,
+            minStock: v.minStock ?? 5,
+            price: v.price || null,
+            comparePrice: v.comparePrice || null,
             priceModifier: v.priceModifier || 0,
+            images: v.images || [],
           })),
         },
       },
