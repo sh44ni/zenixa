@@ -7,7 +7,7 @@ import { formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Heart, Star, Plus } from "lucide-react"
+import { ShoppingCart, Heart, Plus } from "lucide-react"
 import { useCartStore } from "@/lib/store"
 import { toast } from "@/hooks/use-toast"
 import { useState, useRef } from "react"
@@ -83,10 +83,6 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   const inStock = product.variants.some((v) => v.stock > 0)
-
-  // Generate a rating for display (in real app, this would come from DB)
-  const rating = 4.5
-  const reviewCount = 128
 
   return (
     <Link href={`/products/${product.slug}`}>
@@ -174,26 +170,6 @@ export function ProductCard({ product }: ProductCardProps) {
             <h3 className="font-semibold text-sm md:text-base line-clamp-2 leading-tight group-hover:text-primary transition-colors">
               {product.name}
             </h3>
-
-            {/* Rating */}
-            <div className="flex items-center gap-1">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-3 w-3 ${i < Math.floor(rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : i < rating
-                        ? "fill-yellow-400/50 text-yellow-400"
-                        : "fill-muted text-muted"
-                      }`}
-                  />
-                ))}
-              </div>
-              <span className="text-[10px] text-muted-foreground">
-                ({reviewCount})
-              </span>
-            </div>
 
             {/* Price */}
             <div className="flex items-center justify-between pt-1">

@@ -6,20 +6,16 @@ import { Product } from "@/types"
 import { formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Heart, Star, Plus, Check } from "lucide-react"
+import { Plus, Check } from "lucide-react"
 import { useCartStore } from "@/lib/store"
 import { toast } from "@/hooks/use-toast"
 import { useState } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 
 interface ProductCardProps {
     product: Product
 }
 
 export function ModernProductCard({ product }: ProductCardProps) {
-    const { data: session } = useSession()
-    const router = useRouter()
     const addItem = useCartStore((state) => state.addItem)
     const [isAdding, setIsAdding] = useState(false)
 
@@ -39,7 +35,6 @@ export function ModernProductCard({ product }: ProductCardProps) {
     }
 
     const inStock = product.variants.some((v) => v.stock > 0)
-    const rating = 4.8 // Placeholder or fetch dynamic
 
     return (
         <Link href={`/products/${product.slug}`} className="group block h-full">
@@ -102,22 +97,13 @@ export function ModernProductCard({ product }: ProductCardProps) {
 
                 {/* Content */}
                 <div className="p-4 md:p-5">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                            <h3 className="font-bold text-base md:text-lg leading-tight text-foreground transition-colors group-hover:text-primary line-clamp-2">
-                                {product.name}
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-1 font-medium tracking-wide uppercase opacity-70">
-                                {product.category?.name}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center">
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs font-medium ml-1.5 text-foreground/80">{rating}</span>
-                        </div>
+                    <div className="mb-3">
+                        <h3 className="font-bold text-base md:text-lg leading-tight text-foreground transition-colors group-hover:text-primary line-clamp-2">
+                            {product.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 font-medium tracking-wide uppercase opacity-70">
+                            {product.category?.name}
+                        </p>
                     </div>
 
                     <div className="flex items-baseline gap-2">
@@ -135,3 +121,4 @@ export function ModernProductCard({ product }: ProductCardProps) {
         </Link>
     )
 }
+

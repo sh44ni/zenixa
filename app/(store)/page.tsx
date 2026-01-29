@@ -1,10 +1,20 @@
 import Link from "next/link"
+import Image from "next/image"
 import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { ModernProductCard } from "@/components/store/modern-product-card"
-import { BentoGrid } from "@/components/store/bento-grid"
+import { CategoryCarousel } from "@/components/store/category-carousel"
 import { DynamicHero } from "@/components/store/dynamic-hero"
 import { ArrowRight, Truck, Shield, Clock, Star, Zap, Wifi } from "lucide-react"
+
+// Force dynamic rendering - no caching
+export const revalidate = 0
+export const dynamic = "force-dynamic"
+
+interface FeatureBadge {
+  icon: string
+  text: string
+}
 
 async function getFeaturedProducts() {
   return prisma.product.findMany({
@@ -36,42 +46,100 @@ async function getLatestProducts() {
   })
 }
 
+async function getSiteSettings() {
+  try {
+    const settings = await prisma.siteSettings.findFirst({
+      where: { id: "default" }
+    })
+    console.log("Banner settings:", {
+      enabled: settings?.promoBannerEnabled,
+      image: settings?.promoBannerImage,
+    })
+    return settings
+  } catch {
+    return null
+  }
+}
+
+// Default badges
+const defaultBadges: FeatureBadge[] = [
+  { icon: "truck", text: "Free Delivery over PKR 5,000" },
+  { icon: "shield", text: "Secure Payment" },
+  { icon: "clock", text: "Fast Delivery" },
+  { icon: "star", text: "Premium Quality" },
+]
+
+// Icon component that supports both lucide names and custom URLs
+function BadgeIcon({ icon }: { icon: string }) {
+  // Check if it's a URL (custom image)
+  if (icon.startsWith("http") || icon.startsWith("/")) {
+    return (
+      <div className="w-5 h-5 relative flex-shrink-0">
+        <Image src={icon} alt="" fill className="object-contain" />
+      </div>
+    )
+  }
+
+  // Map lucide icon names
+  const iconMap: Record<string, React.ReactNode> = {
+    truck: <Truck className="h-4 w-4 text-primary" />,
+    shield: <Shield className="h-4 w-4 text-primary" />,
+    clock: <Clock className="h-4 w-4 text-primary" />,
+    star: <Star className="h-4 w-4 text-primary" />,
+    zap: <Zap className="h-4 w-4 text-primary" />,
+    wifi: <Wifi className="h-4 w-4 text-primary" />,
+  }
+
+  return <>{iconMap[icon.toLowerCase()] || <Star className="h-4 w-4 text-primary" />}</>
+}
+
 export default async function HomePage() {
-  const [featuredProducts, categories, latestProducts] = await Promise.all([
+  const [featuredProducts, categories, latestProducts, settings] = await Promise.all([
     getFeaturedProducts(),
     getCategories(),
     getLatestProducts(),
+    getSiteSettings(),
   ])
+
+  // Get badges from settings or use defaults
+  const badges: FeatureBadge[] = (() => {
+    try {
+      if (settings?.featureBadges && Array.isArray(settings.featureBadges) && settings.featureBadges.length > 0) {
+        return settings.featureBadges as unknown as FeatureBadge[]
+      }
+      return defaultBadges
+    } catch {
+      return defaultBadges
+    }
+  })()
 
   return (
     <div className="min-h-screen pb-20">
       {/* 1. Immersive Hero */}
       <DynamicHero />
 
-      {/* 2. Marquee / Features - Minimal Scrolling Bar */}
-      <section className="py-6 border-y border-border/50 bg-secondary/20 overflow-hidden">
+      {/* 2. Feature Badges */}
+      <section className="py-5 border-y border-border/50 bg-gradient-to-r from-secondary/30 via-secondary/10 to-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between md:justify-center md:gap-12 overflow-x-auto scrollbar-hide gap-8">
-            {[
-              { icon: Truck, text: "Free Delivery over PKR 5,000" },
-              { icon: Shield, text: "Secure Payment" },
-              { icon: Clock, text: "Fast Delivery" },
-              { icon: Star, text: "Premium Quality" },
-            ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-muted-foreground">
-                <feature.icon className="h-4 w-4 text-primary" />
-                <span>{feature.text}</span>
+          <div className="flex items-center justify-between md:justify-center md:gap-10 lg:gap-16 overflow-x-auto scrollbar-hide gap-6">
+            {badges.filter(b => b.text).map((badge, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2.5 whitespace-nowrap py-1 px-3 rounded-full bg-white/50 backdrop-blur-sm border border-border/30 shadow-sm"
+              >
+                <BadgeIcon icon={badge.icon} />
+                <span className="text-sm font-medium text-foreground">{badge.text}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 3. Bento Grid Categories */}
+      {/* 3. Categories Carousel */}
       {categories.length > 0 && (
         <section className="py-12 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="flex items-end justify-between mb-8 md:mb-12">
+            <div className="flex items-end justify-between mb-8 md:mb-10">
               <div>
                 <h2 className="text-3xl md:text-5xl font-bold font-display tracking-tight mb-2">
                   Collections
@@ -80,20 +148,9 @@ export default async function HomePage() {
                   Curated for your lifestyle
                 </p>
               </div>
-              <Link href="/categories" className="hidden md:block">
-                <Button variant="ghost" className="rounded-full hover:bg-secondary">
-                  View All <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
             </div>
 
-            <BentoGrid categories={categories as any[]} />
-
-            <div className="mt-8 md:hidden text-center">
-              <Link href="/categories">
-                <Button variant="outline" className="rounded-full w-full">View All Collections</Button>
-              </Link>
-            </div>
+            <CategoryCarousel categories={categories as any[]} />
           </div>
         </section>
       )}
@@ -130,62 +187,72 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-      )}
+      )
+      }
 
       {/* 5. Latest Arrivals */}
-      {latestProducts.length > 0 && (
-        <section className="py-12 md:py-20">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold font-display tracking-tight mb-2">New Arrivals</h2>
-                <p className="text-muted-foreground">Fresh from the factory to your doorstep</p>
-              </div>
-              <Link href="/products">
-                <Button className="rounded-full px-8 bg-foreground text-background hover:bg-primary hover:text-white transition-colors">
-                  Shop All New
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-              {latestProducts.map((product) => (
-                <div key={product.id} className="h-full">
-                  <ModernProductCard product={product as any} />
+      {
+        latestProducts.length > 0 && (
+          <section className="py-12 md:py-20">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold font-display tracking-tight mb-2">New Arrivals</h2>
+                  <p className="text-muted-foreground">Fresh from the factory to your doorstep</p>
                 </div>
-              ))}
+                <Link href="/products">
+                  <Button className="rounded-full px-8 bg-foreground text-background hover:bg-primary hover:text-white transition-colors">
+                    Shop All New
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                {latestProducts.map((product) => (
+                  <div key={product.id} className="h-full">
+                    <ModernProductCard product={product as any} />
+                  </div>
+                ))}
+              </div>
             </div>
+          </section>
+        )
+      }
+
+      {/* 6. Promotional Banner (replaces newsletter) */}
+      {settings?.promoBannerEnabled && settings?.promoBannerImage && (
+        <section className="py-16 md:py-20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-foreground/5" />
+          <div className="container mx-auto px-4 relative">
+            {settings.promoBannerLink ? (
+              <Link href={settings.promoBannerLink} className="block max-w-5xl mx-auto">
+                <div className="relative w-full overflow-hidden rounded-[2rem] shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.01] cursor-pointer">
+                  <Image
+                    src={settings.promoBannerImage}
+                    alt="Promotional Banner"
+                    width={settings.promoBannerWidth || 1200}
+                    height={settings.promoBannerHeight || 300}
+                    className="w-full h-auto object-cover"
+                    priority
+                  />
+                </div>
+              </Link>
+            ) : (
+              <div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-[2rem] shadow-2xl">
+                <Image
+                  src={settings.promoBannerImage}
+                  alt="Promotional Banner"
+                  width={settings.promoBannerWidth || 1200}
+                  height={settings.promoBannerHeight || 300}
+                  className="w-full h-auto object-cover"
+                  priority
+                />
+              </div>
+            )}
           </div>
         </section>
       )}
-
-      {/* 6. Newsletter */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-foreground/5" />
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-4xl mx-auto bg-foreground text-background rounded-[2.5rem] p-8 md:p-16 text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 -m-8 w-64 h-64 bg-primary/30 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 -m-8 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl" />
-
-            <h2 className="text-3xl md:text-5xl font-bold font-display mb-4 relative z-10">Don't Miss the Drop</h2>
-            <p className="text-background/70 mb-8 max-w-lg mx-auto relative z-10 text-lg">
-              Join zenixa.club for exclusive early access to new collections and special offers.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto relative z-10">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="h-14 px-6 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 flex-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-              <Button size="lg" className="h-14 px-8 rounded-full bg-white text-black hover:bg-primary hover:text-white transition-colors font-bold">
-                Subscribe
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    </div >
   )
 }
 

@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast"
 import { Loader2, Palette, RotateCcw, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface SiteSettings {
     id: string
@@ -18,10 +17,10 @@ interface SiteSettings {
     heroSliderImages: string[]
     heroTitle: string
     heroSubtitle: string
-    primaryColor: string
-    secondaryColor: string
-    accentColor: string
-    colorSelectionMode: string
+    primaryColor: string | null
+    secondaryColor: string | null
+    accentColor: string | null
+    colorSelectionMode?: string | null
 }
 
 interface ThemeSettingsFormProps {
@@ -99,10 +98,9 @@ const defaultColors = {
 export function ThemeSettingsForm({ settings }: ThemeSettingsFormProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
-    const [primaryColor, setPrimaryColor] = useState(settings.primaryColor)
-    const [secondaryColor, setSecondaryColor] = useState(settings.secondaryColor)
-    const [accentColor, setAccentColor] = useState(settings.accentColor)
-    const [colorSelectionMode, setColorSelectionMode] = useState(settings.colorSelectionMode || "text")
+    const [primaryColor, setPrimaryColor] = useState(settings.primaryColor || defaultColors.primaryColor)
+    const [secondaryColor, setSecondaryColor] = useState(settings.secondaryColor || defaultColors.secondaryColor)
+    const [accentColor, setAccentColor] = useState(settings.accentColor || defaultColors.accentColor)
 
     // Preview colors in real-time
     useEffect(() => {
@@ -131,7 +129,6 @@ export function ThemeSettingsForm({ settings }: ThemeSettingsFormProps) {
                     primaryColor,
                     secondaryColor,
                     accentColor,
-                    colorSelectionMode,
                 }),
             })
 
@@ -157,7 +154,6 @@ export function ThemeSettingsForm({ settings }: ThemeSettingsFormProps) {
         setPrimaryColor(defaultColors.primaryColor)
         setSecondaryColor(defaultColors.secondaryColor)
         setAccentColor(defaultColors.accentColor)
-        setColorSelectionMode("text")
         toast({
             title: "Reset",
             description: "Colors reset to defaults (not saved yet)",
@@ -258,23 +254,6 @@ export function ThemeSettingsForm({ settings }: ThemeSettingsFormProps) {
                         onChange={setAccentColor}
                         tooltip="Used for highlights and special emphasis"
                     />
-
-                    <div className="space-y-3">
-                        <Label>Product Color Selection Mode</Label>
-                        <Select value={colorSelectionMode} onValueChange={setColorSelectionMode}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a mode" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="text">Text (Buttons)</SelectItem>
-                                <SelectItem value="swatch">Swatches (Circles)</SelectItem>
-                                <SelectItem value="image">Image (Thumbnails)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                            Choose how customers select product colors.
-                        </p>
-                    </div>
                 </CardContent>
             </Card>
 

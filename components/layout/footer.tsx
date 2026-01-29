@@ -1,10 +1,34 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, ChevronDown } from "lucide-react"
+import { Facebook, Instagram, Twitter, Youtube, Linkedin, MessageCircle, Globe, Mail, Phone, MapPin, ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+
+interface SocialLink {
+  platform: string
+  url: string
+  label?: string
+}
+
+interface FooterProps {
+  brandText?: string
+  email?: string
+  phone?: string
+  address?: string
+  socialLinks?: SocialLink[]
+}
+
+const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  instagram: Instagram,
+  facebook: Facebook,
+  twitter: Twitter,
+  youtube: Youtube,
+  linkedin: Linkedin,
+  whatsapp: MessageCircle,
+  tiktok: Globe,
+  other: Globe,
+}
 
 function FooterSection({
   title,
@@ -46,7 +70,20 @@ function FooterSection({
   )
 }
 
-export function Footer() {
+export function Footer({
+  brandText = "Your trusted destination for quality products at competitive prices. Shop with confidence at Zenixa.",
+  email = "support@zenixa.club",
+  phone = "+92 300 1234567",
+  address = "Lahore, Pakistan",
+  socialLinks = []
+}: FooterProps) {
+  // Default social links if none provided
+  const displaySocialLinks = socialLinks.length > 0 ? socialLinks : [
+    { platform: "facebook", url: "#" },
+    { platform: "instagram", url: "#" },
+    { platform: "twitter", url: "#" },
+  ]
+
   return (
     <footer className="bg-gray-900 text-gray-300 pb-20 md:pb-0">
       <div className="container mx-auto px-4 py-8 md:py-12">
@@ -61,31 +98,24 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm leading-relaxed">
-              Your trusted destination for quality products at competitive prices.
-              Shop with confidence at Zenixa.
+              {brandText}
             </p>
-            <div className="flex space-x-4">
-              <a
-                href="#"
-                className="p-2 rounded-full bg-gray-800 hover:bg-primary transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="p-2 rounded-full bg-gray-800 hover:bg-primary transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="p-2 rounded-full bg-gray-800 hover:bg-primary transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
+            <div className="flex space-x-3 flex-wrap gap-y-2">
+              {displaySocialLinks.map((link, index) => {
+                const Icon = PLATFORM_ICONS[link.platform] || Globe
+                return (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-full bg-gray-800 hover:bg-primary transition-colors"
+                    aria-label={link.label || link.platform}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                )
+              })}
             </div>
           </div>
 
@@ -144,31 +174,36 @@ export function Footer() {
           {/* Contact Info */}
           <FooterSection title="Contact Us" defaultOpen>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start space-x-3">
-                <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <span>123 Business Ave, Lahore, Pakistan</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Phone className="h-4 w-4 text-primary shrink-0" />
-                <a href="tel:+923001234567" className="hover:text-primary transition-colors">
-                  +92 300 1234567
-                </a>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Mail className="h-4 w-4 text-primary shrink-0" />
-                <a href="mailto:support@zenixa.pk" className="hover:text-primary transition-colors">
-                  support@zenixa.pk
-                </a>
-              </li>
+              {address && (
+                <li className="flex items-start space-x-3">
+                  <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <span>{address}</span>
+                </li>
+              )}
+              {phone && (
+                <li className="flex items-center space-x-3">
+                  <Phone className="h-4 w-4 text-primary shrink-0" />
+                  <a href={`tel:${phone.replace(/\s/g, '')}`} className="hover:text-primary transition-colors">
+                    {phone}
+                  </a>
+                </li>
+              )}
+              {email && (
+                <li className="flex items-center space-x-3">
+                  <Mail className="h-4 w-4 text-primary shrink-0" />
+                  <a href={`mailto:${email}`} className="hover:text-primary transition-colors">
+                    {email}
+                  </a>
+                </li>
+              )}
             </ul>
           </FooterSection>
         </div>
 
         <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-xs md:text-sm">
-          <p>&copy; 2026 Zenixa. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Zenixa. All rights reserved.</p>
         </div>
       </div>
     </footer>
   )
 }
-

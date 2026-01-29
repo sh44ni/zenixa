@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ const TIMELINE_STEPS = [
     { id: "DELIVERED", label: "Delivered", icon: MapPin },
 ]
 
-export default function TrackingPage() {
+function TrackingContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const initialOrderId = searchParams.get("order") || ""
@@ -248,3 +248,19 @@ export default function TrackingPage() {
         </div>
     )
 }
+
+export default function TrackingPage() {
+    return (
+        <Suspense fallback={
+            <div className="container mx-auto px-4 py-8 max-w-3xl min-h-[60vh]">
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold mb-2">Track Your Order</h1>
+                    <p className="text-muted-foreground">Loading...</p>
+                </div>
+            </div>
+        }>
+            <TrackingContent />
+        </Suspense>
+    )
+}
+

@@ -28,7 +28,18 @@ export const useCartStore = create<CartStore>()(
         const items = get().items
         const itemId = variant ? `${product.id}-${variant.id}` : product.id
 
+        // Check available stock
+        const availableStock = variant?.stock ?? product.variants[0]?.stock ?? 0
         const existingItem = items.find(item => item.id === itemId)
+        const currentQty = existingItem?.quantity || 0
+        const newQty = currentQty + quantity
+
+        // Validate stock availability
+        if (newQty > availableStock) {
+          // Return without adding - stock exceeded
+          console.warn(`Cannot add ${quantity} items. Only ${availableStock - currentQty} available.`)
+          return
+        }
 
         if (existingItem) {
           set({

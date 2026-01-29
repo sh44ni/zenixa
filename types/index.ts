@@ -40,10 +40,16 @@ export interface Product {
 export interface ProductVariant {
   id: string
   productId: string
+  name: string | null
   size: string | null
   color: string | null
+  sku: string | null
   stock: number
+  minStock: number
+  price: number | null
+  comparePrice: number | null
   priceModifier: number
+  images: string[]
   createdAt: Date
   updatedAt: Date
 }
