@@ -52,7 +52,7 @@ export default async function StoreLayout({
   return (
     <div className={`flex min-h-screen flex-col store-theme ${outfit.variable} ${space.variable} font-sans`}>
       <Header />
-      <main className="flex-1" id="main-content">
+      <main className="flex-1 pt-16 md:pt-20" id="main-content">
         {children}
       </main>
       <Footer
