@@ -78,6 +78,26 @@ export function ProductDetail({
   const [activeTab, setActiveTab] = useState<"description" | "features">("description")
   const [isAdded, setIsAdded] = useState(false)
 
+  // Sticky Bar Logic
+  const mainButtonRef = useRef<HTMLButtonElement>(null)
+  const [showSticky, setShowSticky] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show sticky bar only if main button is scrolled past (above viewport)
+        setShowSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+      },
+      { threshold: 0 }
+    )
+
+    if (mainButtonRef.current) {
+      observer.observe(mainButtonRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
   const { data: session } = useSession()
   const router = useRouter()
   const addItem = useCartStore((state) => state.addItem)
@@ -505,6 +525,7 @@ export function ProductDetail({
               </div>
 
               <Button
+                ref={mainButtonRef}
                 size="lg"
                 className={`
                          w-full h-14 text-lg font-bold rounded-2xl shadow-xl transition-all duration-300
@@ -571,7 +592,12 @@ export function ProductDetail({
       </div>
 
       {/* Mobile Sticky Bar */}
-      <div className="md:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40">
+      <div
+        className={cn(
+          "md:hidden fixed bottom-[calc(4rem+1rem+env(safe-area-inset-bottom))] left-4 right-4 z-40 transition-transform duration-500 ease-in-out",
+          showSticky && !isAdded ? "translate-y-0" : "translate-y-[200%]"
+        )}
+      >
         <div className="bg-foreground text-background p-1.5 rounded-full shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md bg-opacity-95">
           <div className="pl-4 flex flex-col justify-center">
             <span className="text-xs text-background/70 font-medium">Total</span>

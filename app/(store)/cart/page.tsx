@@ -37,7 +37,7 @@ export default function CartPage() {
   const total = subtotal + shipping
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-8 pb-32 md:py-8">
       <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -60,7 +60,7 @@ export default function CartPage() {
                     <div className="flex-1 space-y-1">
                       <Link
                         href={`/products/${item.product.slug}`}
-                        className="font-semibold hover:text-primary"
+                        className="font-semibold hover:text-primary line-clamp-2"
                       >
                         {item.product.name}
                       </Link>
@@ -75,29 +75,32 @@ export default function CartPage() {
                         {formatPrice(itemPrice)}
                       </p>
                     </div>
-                    <div className="flex flex-col items-end justify-between">
+
+                    {/* Actions Column */}
+                    <div className="flex flex-col items-end justify-between h-24 py-0.5">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItem(item.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive -mr-2"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      <div className="flex items-center space-x-2">
+
+                      <div className="flex items-center border rounded-md bg-background shadow-sm">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7 rounded-none rounded-l-md hover:bg-muted"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center">{item.quantity}</span>
+                        <span className="w-8 text-center text-sm font-medium tabular-nums">{item.quantity}</span>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7 rounded-none rounded-r-md hover:bg-muted"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         >
                           <Plus className="h-3 w-3" />

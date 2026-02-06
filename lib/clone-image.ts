@@ -7,6 +7,9 @@ import sharp from "sharp"
  * Clone an external image URL to local uploads folder
  * Compresses and converts to WebP format
  * Returns the local URL if successful, or original URL if failed
+ * 
+ * NOTE: On Vercel (production), filesystem is read-only so we skip cloning
+ * and return the original URL - Next.js Image will still optimize it
  */
 export async function cloneExternalImage(url: string): Promise<string> {
     // Skip if already local
@@ -16,6 +19,12 @@ export async function cloneExternalImage(url: string): Promise<string> {
 
     // Skip if not a valid URL
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        return url
+    }
+
+    // On Vercel (production), filesystem is read-only - skip cloning
+    // Next.js Image optimization will still work with external URLs
+    if (process.env.VERCEL) {
         return url
     }
 

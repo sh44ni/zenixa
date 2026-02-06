@@ -100,7 +100,7 @@ export function Footer({
             <p className="text-sm leading-relaxed">
               {brandText}
             </p>
-            <div className="flex space-x-3 flex-wrap gap-y-2">
+            <div className="flex justify-center md:justify-start space-x-3 flex-wrap gap-y-2">
               {displaySocialLinks.map((link, index) => {
                 const Icon = PLATFORM_ICONS[link.platform] || Globe
                 return (
@@ -109,7 +109,7 @@ export function Footer({
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-full bg-gray-800 hover:bg-primary transition-colors"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-800 hover:bg-primary transition-colors"
                     aria-label={link.label || link.platform}
                   >
                     <Icon className="h-4 w-4" />
