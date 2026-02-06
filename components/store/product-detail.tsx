@@ -571,7 +571,7 @@ export function ProductDetail({
       </div>
 
       {/* Mobile Sticky Bar */}
-      <div className="md:hidden fixed bottom-[calc(0.5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40">
+      <div className="md:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40">
         <div className="bg-foreground text-background p-1.5 rounded-full shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md bg-opacity-95">
           <div className="pl-4 flex flex-col justify-center">
             <span className="text-xs text-background/70 font-medium">Total</span>

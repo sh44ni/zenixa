@@ -247,7 +247,11 @@ export function PromoBannerSettings({ settings }: PromoBannerSettingsProps) {
                                         disabled={uploading}
                                     />
                                     {uploading ? (
-                                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                            <span className="text-sm font-medium text-foreground">Uploading Image...</span>
+                                            <span className="text-xs text-muted-foreground">Please wait</span>
+                                        </div>
                                     ) : (
                                         <>
                                             <Upload className="h-8 w-8 text-muted-foreground mb-2" />
@@ -293,7 +297,7 @@ export function PromoBannerSettings({ settings }: PromoBannerSettingsProps) {
                         </Button>
                     </form>
                 </CardContent>
-            </Card>
-        </div>
+            </Card >
+        </div >
     )
 }

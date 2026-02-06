@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { writeFile, mkdir } from "fs/promises"
-import { existsSync } from "fs"
-import path from "path"
+import { v2 as cloudinary } from "cloudinary"
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 // GET - List all media with pagination
 export async function GET(request: NextRequest) {
@@ -69,36 +74,33 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Create uploads directory if not exists
-        const uploadDir = path.join(process.cwd(), "public", "uploads")
-        if (!existsSync(uploadDir)) {
-            await mkdir(uploadDir, { recursive: true })
-        }
-
-        // Generate unique filename
-        const timestamp = Date.now()
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg"
-        const filename = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`
-        const filepath = path.join(uploadDir, filename)
-
-        // Write file to disk
+        // Convert file to buffer
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
-        await writeFile(filepath, buffer)
 
-        // Get image dimensions (basic approach without sharp)
-        let width: number | null = null
-        let height: number | null = null
+        // Upload to Cloudinary using promise wrapper
+        const uploadResult = await new Promise<any>((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    folder: "zenixa-uploads",
+                    resource_type: "auto",
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            ).end(buffer)
+        })
 
         // Create media record
         const media = await prisma.media.create({
             data: {
                 filename: file.name,
-                url: `/uploads/${filename}`,
+                url: uploadResult.secure_url,
                 mimeType: file.type,
                 size: file.size,
-                width,
-                height,
+                width: uploadResult.width,
+                height: uploadResult.height,
             },
         })
 
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Media upload error:", error)
         return NextResponse.json(
-            { error: "Failed to upload file" },
+            { error: "Failed to upload file to Cloudinary" },
             { status: 500 }
         )
     }

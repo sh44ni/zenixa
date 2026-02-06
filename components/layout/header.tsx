@@ -57,22 +57,11 @@ export function Header() {
       >
         <div className="container mx-auto px-4 w-full h-16 md:h-20 flex items-center justify-between">
 
-          {/* Mobile: Logo + Search */}
-          <div className="flex md:hidden w-full items-center justify-between">
-            {/* Logo - no pill */}
+          {/* Mobile: Logo Only (Centered) */}
+          <div className="flex md:hidden w-full items-center justify-center">
             <Link href="/" className="flex items-center">
               <img src="/logo.svg" alt="Zenixa" className="h-8 w-auto" />
             </Link>
-
-            {/* Right side mobile: Search Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 text-foreground hover:bg-secondary rounded-full"
-              onClick={() => router.push('/products')}
-            >
-              <Search className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Desktop: Full Layout */}

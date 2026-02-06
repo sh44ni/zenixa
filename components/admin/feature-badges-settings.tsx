@@ -54,11 +54,16 @@ export function FeatureBadgesSettings({ settings }: FeatureBadgesSettingsProps) 
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
     // Parse badges from settings or use defaults
+    // Only use defaults if featureBadges was never configured (null/undefined)
+    // If it's an empty array, respect that (user deleted all badges)
     const initialBadges = (() => {
         try {
-            if (settings.featureBadges && Array.isArray(settings.featureBadges) && settings.featureBadges.length > 0) {
-                return settings.featureBadges as FeatureBadge[]
+            // Check if featureBadges property exists (even if empty array)
+            if ('featureBadges' in settings && settings.featureBadges !== null && settings.featureBadges !== undefined) {
+                // Return the array as-is (could be empty if user deleted all badges)
+                return Array.isArray(settings.featureBadges) ? settings.featureBadges as FeatureBadge[] : []
             }
+            // featureBadges not configured yet - use defaults
             return defaultBadges
         } catch {
             return defaultBadges

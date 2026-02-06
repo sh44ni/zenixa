@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { cloneExternalImages } from "@/lib/clone-image"
 
-function parseCSV(text: string): string[][] {
+// Parse CSV with header row
+function parseCSV(text: string): { headers: string[], rows: Record<string, string>[] } {
     const lines: string[][] = []
     let currentLine: string[] = []
     let currentField = ""
@@ -27,11 +28,13 @@ function parseCSV(text: string): string[][] {
             if (char === '"') {
                 inQuotes = true
             } else if (char === ",") {
-                currentLine.push(currentField)
+                currentLine.push(currentField.trim())
                 currentField = ""
             } else if (char === "\n" || (char === "\r" && nextChar === "\n")) {
-                currentLine.push(currentField)
-                lines.push(currentLine)
+                currentLine.push(currentField.trim())
+                if (currentLine.some(f => f)) {
+                    lines.push(currentLine)
+                }
                 currentLine = []
                 currentField = ""
                 if (char === "\r") i++
@@ -42,11 +45,26 @@ function parseCSV(text: string): string[][] {
     }
 
     if (currentField || currentLine.length > 0) {
-        currentLine.push(currentField)
-        lines.push(currentLine)
+        currentLine.push(currentField.trim())
+        if (currentLine.some(f => f)) {
+            lines.push(currentLine)
+        }
     }
 
-    return lines
+    if (lines.length < 2) {
+        return { headers: [], rows: [] }
+    }
+
+    const headers = lines[0].map(h => h.toLowerCase().replace(/\s+/g, "_"))
+    const rows = lines.slice(1).map(line => {
+        const row: Record<string, string> = {}
+        headers.forEach((header, i) => {
+            row[header] = line[i] || ""
+        })
+        return row
+    })
+
+    return { headers, rows }
 }
 
 function slugify(text: string): string {
@@ -56,11 +74,66 @@ function slugify(text: string): string {
         .replace(/(^-|-$)/g, "")
 }
 
+interface ParsedProduct {
+    type: "single" | "variable" | "variant"
+    sku: string
+    name: string
+    category: string
+    description: string
+    price: number
+    comparePrice: number | null
+    image: string
+    gallery: string[]
+    stock: number
+    featured: boolean
+    parentSku: string
+    color: string
+    size: string
+    isDefault: boolean
+}
+
+function parseRow(row: Record<string, string>): ParsedProduct | null {
+    const type = row.type?.toLowerCase()
+    if (!["single", "variable", "variant"].includes(type)) {
+        return null
+    }
+
+    const price = parseFloat(row.price) || 0
+    const comparePrice = row.compare_price ? parseFloat(row.compare_price) : null
+    const gallery = row.gallery ? row.gallery.split("|").map(s => s.trim()).filter(Boolean) : []
+
+    return {
+        type: type as "single" | "variable" | "variant",
+        sku: row.sku || "",
+        name: row.name || "",
+        category: row.category || "",
+        description: row.description || "",
+        price,
+        comparePrice: isNaN(comparePrice as number) ? null : comparePrice,
+        image: row.image || "",
+        gallery,
+        stock: parseInt(row.stock) || 0,
+        featured: row.featured === "1",
+        parentSku: row.parent_sku || "",
+        color: row.color || "",
+        size: row.size || "",
+        isDefault: row.is_default === "1",
+    }
+}
+
+async function cloneImages(urls: string[]): Promise<string[]> {
+    if (urls.length === 0) return []
+    try {
+        return await cloneExternalImages(urls)
+    } catch {
+        return urls // Return original URLs on failure
+    }
+}
+
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions)
-
-        if (!session?.user || session.user.role !== "ADMIN") {
+        if (!session?.user?.isAdmin) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
@@ -72,122 +145,162 @@ export async function POST(request: NextRequest) {
         }
 
         const text = await file.text()
-        const rows = parseCSV(text)
+        const { rows } = parseCSV(text)
 
-        if (rows.length < 2) {
-            return NextResponse.json({ error: "CSV must have header and at least one data row" }, { status: 400 })
+        if (rows.length === 0) {
+            return NextResponse.json({ error: "CSV is empty" }, { status: 400 })
         }
 
-        const headers = rows[0].map(h => h.toLowerCase().trim())
-        const dataRows = rows.slice(1)
-
-        // Required columns
-        const nameIdx = headers.indexOf("name")
-        const priceIdx = headers.indexOf("price")
-        const categoryIdx = headers.indexOf("category")
-
-        if (nameIdx === -1 || priceIdx === -1 || categoryIdx === -1) {
-            return NextResponse.json(
-                { error: "CSV must have Name, Price, and Category columns" },
-                { status: 400 }
-            )
+        // Parse all valid rows
+        const products: ParsedProduct[] = []
+        for (const row of rows) {
+            const parsed = parseRow(row)
+            if (parsed) {
+                products.push(parsed)
+            }
         }
 
-        // Optional columns
-        const descIdx = headers.indexOf("description")
-        const featuredIdx = headers.indexOf("featured")
-        const imagesIdx = headers.indexOf("images")
-        const slugIdx = headers.indexOf("slug")
+        // Track products by SKU
+        const productMap = new Map<string, string>() // SKU -> Product ID
 
         let created = 0
         let updated = 0
-        let errors: string[] = []
+        let skipped = 0
+        const errors: string[] = []
 
-        for (let i = 0; i < dataRows.length; i++) {
-            const row = dataRows[i]
-            const rowNum = i + 2 // 1-indexed, accounting for header
+        // Process single and variable (parent) products first
+        const parentProducts = products.filter(p => p.type === "single" || p.type === "variable")
 
+        for (const product of parentProducts) {
             try {
-                const name = row[nameIdx]?.trim()
-                const priceStr = row[priceIdx]?.trim()
-                const categoryName = row[categoryIdx]?.trim()
-
-                if (!name || !priceStr || !categoryName) {
-                    errors.push(`Row ${rowNum}: Missing required field`)
-                    continue
-                }
-
-                const price = parseFloat(priceStr)
-                if (isNaN(price)) {
-                    errors.push(`Row ${rowNum}: Invalid price`)
-                    continue
-                }
-
                 // Find or create category
                 let category = await prisma.category.findFirst({
-                    where: { name: { equals: categoryName, mode: "insensitive" } },
+                    where: { name: { equals: product.category || "Uncategorized", mode: "insensitive" } }
                 })
-
                 if (!category) {
                     category = await prisma.category.create({
                         data: {
-                            name: categoryName,
-                            slug: slugify(categoryName),
-                        },
+                            name: product.category || "Uncategorized",
+                            slug: slugify(product.category || "uncategorized"),
+                        }
                     })
                 }
 
-                const slug = slugIdx !== -1 && row[slugIdx]?.trim()
-                    ? row[slugIdx].trim()
-                    : slugify(name)
-
-                const description = descIdx !== -1 ? row[descIdx]?.trim() || null : null
-                const featured = featuredIdx !== -1
-                    ? ["yes", "true", "1"].includes(row[featuredIdx]?.toLowerCase().trim())
-                    : false
-                let images = imagesIdx !== -1 && row[imagesIdx]?.trim()
-                    ? row[imagesIdx].split(";").map(s => s.trim()).filter(Boolean)
-                    : []
-
-                // Clone external images to local storage
-                if (images.length > 0) {
-                    images = await cloneExternalImages(images)
+                // Clone images
+                let images: string[] = []
+                const allImages = [product.image, ...product.gallery].filter(Boolean)
+                if (allImages.length > 0) {
+                    images = await cloneImages(allImages)
                 }
 
-                // Check if product exists by slug
-                const existingProduct = await prisma.product.findUnique({
-                    where: { slug },
+                const slug = slugify(product.sku || product.name)
+
+                // Check if exists
+                const existing = await prisma.product.findFirst({
+                    where: { OR: [{ slug }, { name: product.name }] }
                 })
 
-                if (existingProduct) {
+                if (existing) {
                     await prisma.product.update({
-                        where: { id: existingProduct.id },
+                        where: { id: existing.id },
                         data: {
-                            name,
-                            price,
-                            description,
-                            featured,
-                            images,
+                            name: product.name,
+                            description: product.description || undefined,
+                            price: product.price || existing.price,
+                            comparePrice: product.comparePrice,
+                            images: images.length > 0 ? images : undefined,
+                            featured: product.featured,
                             categoryId: category.id,
-                        },
+                        }
+                    })
+                    productMap.set(product.sku, existing.id)
+                    updated++
+                } else {
+                    const created_product = await prisma.product.create({
+                        data: {
+                            name: product.name,
+                            slug: slug + "-" + Date.now().toString(36),
+                            description: product.description || null,
+                            price: product.price,
+                            comparePrice: product.comparePrice,
+                            images,
+                            featured: product.featured,
+                            categoryId: category.id,
+                        }
+                    })
+                    productMap.set(product.sku, created_product.id)
+                    created++
+                }
+            } catch (err) {
+                errors.push(`${product.sku}: ${err instanceof Error ? err.message : "Unknown error"}`)
+            }
+        }
+
+        // Process variants
+        const variants = products.filter(p => p.type === "variant")
+
+        for (const variant of variants) {
+            try {
+                const parentId = variant.parentSku ? productMap.get(variant.parentSku) : null
+
+                if (!parentId) {
+                    // Parent not in this import, try finding in DB
+                    const parentProduct = await prisma.product.findFirst({
+                        where: { slug: { contains: slugify(variant.parentSku) } }
+                    })
+                    if (!parentProduct) {
+                        skipped++
+                        continue
+                    }
+                    productMap.set(variant.parentSku, parentProduct.id)
+                }
+
+                const finalParentId = productMap.get(variant.parentSku)!
+
+                // Clone variant images
+                let images: string[] = []
+                const allImages = [variant.image, ...variant.gallery].filter(Boolean)
+                if (allImages.length > 0) {
+                    images = await cloneImages(allImages)
+                }
+
+                // Check if variant exists by SKU
+                const existingVariant = await prisma.productVariant.findFirst({
+                    where: { productId: finalParentId, sku: variant.sku }
+                })
+
+                if (existingVariant) {
+                    await prisma.productVariant.update({
+                        where: { id: existingVariant.id },
+                        data: {
+                            name: variant.name,
+                            price: variant.price || undefined,
+                            comparePrice: variant.comparePrice,
+                            stock: variant.stock,
+                            color: variant.color || undefined,
+                            size: variant.size || undefined,
+                            images,
+                        }
                     })
                     updated++
                 } else {
-                    await prisma.product.create({
+                    await prisma.productVariant.create({
                         data: {
-                            name,
-                            slug,
-                            price,
-                            description,
-                            featured,
+                            productId: finalParentId,
+                            sku: variant.sku,
+                            name: variant.name,
+                            price: variant.price || undefined,
+                            comparePrice: variant.comparePrice,
+                            stock: variant.stock,
+                            color: variant.color || undefined,
+                            size: variant.size || undefined,
                             images,
-                            categoryId: category.id,
-                        },
+                        }
                     })
                     created++
                 }
             } catch (err) {
-                errors.push(`Row ${rowNum}: ${err instanceof Error ? err.message : "Unknown error"}`)
+                errors.push(`${variant.sku}: ${err instanceof Error ? err.message : "Unknown error"}`)
             }
         }
 
@@ -195,7 +308,8 @@ export async function POST(request: NextRequest) {
             success: true,
             created,
             updated,
-            errors: errors.slice(0, 10), // Limit error messages
+            skipped,
+            errors: errors.slice(0, 10),
             totalErrors: errors.length,
         })
     } catch (error) {

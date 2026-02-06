@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
 // GET - Fetch all policy pages
@@ -21,7 +22,7 @@ export async function GET() {
 // POST - Create a new policy page
 export async function POST(request: Request) {
     try {
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
