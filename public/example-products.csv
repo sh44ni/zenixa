@@ -1,0 +1,10 @@
+type,sku,name,category,description,price,compare_price,image,gallery,stock,featured,parent_sku,color,size,is_default
+single,WALLET-001,Classic Leather Wallet,Accessories,Premium leather wallet with RFID protection and multiple card slots,4500,5900,https://images.unsplash.com/photo-1627123424574-724758594e93?w=800,,25,1,,,,
+variable,TOTE-PARENT,Elegant Leather Tote,Bags,Spacious designer tote bag with premium leather finish and gold hardware,0,,https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800,https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800,0,1,,,,
+variant,TOTE-BLACK,Elegant Leather Tote - Black,,,12000,15000,https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800,https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800|https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800,10,,TOTE-PARENT,Black,,1
+variant,TOTE-TAN,Elegant Leather Tote - Tan,,,12000,15000,https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800,https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=800,8,,TOTE-PARENT,Tan,,0
+variant,TOTE-BURGUNDY,Elegant Leather Tote - Burgundy,,,13000,16000,https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800,,5,,TOTE-PARENT,Burgundy,,0
+variable,CROSSBODY-PARENT,Mini Crossbody Bag,Bags,Compact crossbody with adjustable strap and secure zipper closure,0,,https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800,,0,0,,,,
+variant,CROSSBODY-PINK,Mini Crossbody - Blush Pink,,,8500,9900,https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800,,15,,CROSSBODY-PARENT,Blush Pink,,1
+variant,CROSSBODY-CREAM,Mini Crossbody - Cream,,,8500,9900,https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800,,12,,CROSSBODY-PARENT,Cream,,0
+single,BELT-001,Premium Leather Belt,Accessories,Genuine leather belt with brushed metal buckle,3500,4500,https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=800,,30,0,,,,

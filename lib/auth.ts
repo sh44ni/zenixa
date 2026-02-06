@@ -5,25 +5,25 @@ import { prisma } from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // Customer login provider
     CredentialsProvider({
-      name: "credentials",
+      id: "credentials",
+      name: "Customer Login",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials")
+          return null
         }
 
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
+          where: { email: credentials.email }
         })
 
         if (!user) {
-          throw new Error("User not found")
+          return null
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         )
 
         if (!isPasswordValid) {
-          throw new Error("Invalid password")
+          return null
         }
 
         return {
@@ -40,15 +40,56 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          isAdmin: false,
         }
       }
-    })
+    }),
+    // Admin login provider - uses AdminUser table
+    CredentialsProvider({
+      id: "admin-credentials",
+      name: "Admin Login",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        const adminUser = await prisma.adminUser.findUnique({
+          where: { email: credentials.email }
+        })
+
+        if (!adminUser) {
+          return null
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          adminUser.password
+        )
+
+        if (!isPasswordValid) {
+          return null
+        }
+
+        return {
+          id: adminUser.id,
+          email: adminUser.email,
+          name: adminUser.name,
+          role: "ADMIN",
+          isAdmin: true,
+        }
+      }
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
         token.id = user.id
+        token.isAdmin = user.isAdmin
       }
       return token
     },
@@ -56,6 +97,7 @@ export const authOptions: NextAuthOptions = {
       if (session?.user) {
         session.user.role = token.role as string
         session.user.id = token.id as string
+        session.user.isAdmin = token.isAdmin as boolean
       }
       return session
     }

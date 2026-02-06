@@ -102,11 +102,16 @@ export default async function HomePage() {
   ])
 
   // Get badges from settings or use defaults
+  // If featureBadges is explicitly set (even if empty), respect that choice
+  // Only use defaults if featureBadges was never configured
   const badges: FeatureBadge[] = (() => {
     try {
-      if (settings?.featureBadges && Array.isArray(settings.featureBadges) && settings.featureBadges.length > 0) {
-        return settings.featureBadges as unknown as FeatureBadge[]
+      // Check if settings exist and featureBadges property exists (even if empty array)
+      if (settings && 'featureBadges' in settings && settings.featureBadges !== null) {
+        // Return the array as-is (could be empty if user deleted all badges)
+        return Array.isArray(settings.featureBadges) ? settings.featureBadges as unknown as FeatureBadge[] : []
       }
+      // No settings or featureBadges not configured yet - use defaults
       return defaultBadges
     } catch {
       return defaultBadges
