@@ -24,6 +24,8 @@ import {
   BarChart3,
   TicketPercent,
   FileText,
+  KeyRound,
+  BookOpen,
 } from "lucide-react"
 
 const navItems = [
@@ -38,6 +40,8 @@ const navItems = [
   { href: "/admin/media", label: "Media", icon: ImageIcon },
   { href: "/admin/pages", label: "Pages", icon: FileText },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/api", label: "API & Webhooks", icon: KeyRound },
+  { href: "/admin/api-docs", label: "API Docs", icon: BookOpen },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
 

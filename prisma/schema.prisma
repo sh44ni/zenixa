@@ -336,3 +336,29 @@ model FaqItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// API keys for external storefront connections
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String    // Descriptive name e.g. "Mobile App", "Website"
+  key         String    @unique
+  prefix      String    // First 8 chars for display identification
+  permissions String[]  // e.g. ["products:read", "orders:write"]
+  isActive    Boolean   @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Webhook endpoints for notifying external storefronts
+model WebhookEndpoint {
+  id        String   @id @default(cuid())
+  url       String
+  secret    String   // HMAC secret for payload signing
+  events    String[] // e.g. ["order.created", "product.updated", "inventory.low"]
+  isActive  Boolean  @default(true)
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
