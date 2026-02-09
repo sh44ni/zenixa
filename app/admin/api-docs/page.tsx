@@ -288,7 +288,8 @@ const STOREFRONT_SECTIONS: Section[] = [
     "footer": { "brandText": "...", "email": "...", "socialLinks": [...] },
     "productBadges": { ... },
     "featureBadges": [...],
-    "promoBanner": { ... }
+    "ctaBanner": { "image": "...", "title": "...", "subtitle": "...", "buttonText": "...", "link": "..." },
+    "promoBanner": { "enabled": true, "image": "...", "link": "...", "width": 1200, "height": 300 }
   }
 }`,
       },

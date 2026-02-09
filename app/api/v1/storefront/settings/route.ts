@@ -70,6 +70,13 @@ export async function GET(request: NextRequest) {
         freeDeliveryThreshold: settings?.freeDeliveryThreshold ?? 5000,
         alwaysFreeDelivery: settings?.alwaysFreeDelivery ?? false,
       },
+      ctaBanner: {
+        image: settings?.ctaBannerImage,
+        title: settings?.ctaBannerTitle,
+        subtitle: settings?.ctaBannerSubtitle,
+        buttonText: settings?.ctaBannerButtonText,
+        link: settings?.ctaBannerLink,
+      },
       promoBanner: {
         enabled: settings?.promoBannerEnabled ?? false,
         image: settings?.promoBannerImage,

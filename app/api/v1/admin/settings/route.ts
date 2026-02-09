@@ -64,6 +64,7 @@ export async function PUT(request: NextRequest) {
         "productBadge1Icon", "productBadge1Title", "productBadge1Subtitle", "productBadge1Enabled",
         "productBadge2Icon", "productBadge2Title", "productBadge2Subtitle", "productBadge2Enabled",
         "deliveryCharges", "freeDeliveryEnabled", "freeDeliveryThreshold", "alwaysFreeDelivery",
+        "ctaBannerImage", "ctaBannerTitle", "ctaBannerSubtitle", "ctaBannerButtonText", "ctaBannerLink",
         "promoBannerEnabled", "promoBannerImage", "promoBannerLink", "promoBannerWidth", "promoBannerHeight",
         "footerBrandText", "footerEmail", "footerPhone", "footerAddress", "footerSocialLinks",
       ]
